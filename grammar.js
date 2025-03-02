@@ -62,13 +62,14 @@ module.exports = grammar({
       seq("type variables", $.class_properties, "end variables"),
 
     forward_prototypes: ($) =>
-      seq("forward prototypes", $.function_prototype, "end prototypes"),
+      seq("forward prototypes", repeat($.function_prototype), "end prototypes"),
 
-    function_prototyp: ($) => seq(repeat($.identifier), $.function_parameters),
+    function_prototype: ($) => seq(repeat($.identifier), $.function_parameters),
 
-    function_parameter: ($) => $.function_parameter,
-    function_paramete: ($) => seq(opt("ref"), $.type, $.identifier),
+    function_parameters: ($) =>
+      seq("(", repeat(seq($.function_parameter, optional(","))), ")"),
 
+    function_parameter: ($) => seq(optional("ref"), $.type, $.identifier),
     class_properties: ($) => repeat1($.property),
 
     property: ($) => seq($.type, $.property_name, optional(seq("=", $.value))),

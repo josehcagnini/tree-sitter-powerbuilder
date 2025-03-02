@@ -37,6 +37,10 @@
         {
           "type": "SYMBOL",
           "name": "class_variables"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "forward_prototypes"
         }
       ]
     },
@@ -177,6 +181,104 @@
         {
           "type": "STRING",
           "value": "end variables"
+        }
+      ]
+    },
+    "forward_prototypes": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "forward prototypes"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "function_prototype"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "end prototypes"
+        }
+      ]
+    },
+    "function_prototype": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "function_parameters"
+        }
+      ]
+    },
+    "function_parameters": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "function_parameter"
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": ","
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ")"
+        }
+      ]
+    },
+    "function_parameter": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "ref"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "type"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "identifier"
         }
       ]
     },
