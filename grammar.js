@@ -13,12 +13,6 @@ module.exports = grammar({
   // extras: (_) => ["\r"],
 
   rules: {
-    //--=[ Common definitions  ]=--
-
-    identifier: (_) => /[a-zA-Z0-9_]+/,
-
-    //--------------------
-
     source_file: ($) =>
       seq(
         seq("HA$PBExportHeader$", $.class_name, ".", $.class_type),
@@ -26,6 +20,7 @@ module.exports = grammar({
         $.global_class_properties,
         $.class_variables,
         $.forward_prototypes,
+        optional($.function_implementations),
       ),
     class_name: ($) => $.identifier,
     class_type: ($) => $.identifier,
@@ -71,12 +66,21 @@ module.exports = grammar({
     forward_prototypes: ($) =>
       seq("forward prototypes", repeat($.function_prototype), "end prototypes"),
 
-    class_properties: ($) => repeat1($.property),
+    class_properties: ($) => repeat1($.variable),
 
-    property: ($) => seq($.type, $.property_name, optional(seq("=", $.value))),
+    variable: ($) =>
+      prec.left(
+        2,
+        seq(
+          $.type,
+          repeat1(
+            seq($.variable_name, optional(seq("=", $.value)), optional(",")),
+          ),
+        ),
+      ),
 
     type: ($) => /\w+/,
-    property_name: ($) => /\w+/,
+    variable_name: ($) => /\w+/,
 
     //--=[ Functions prototypes  ]=--
     function_prototype: ($) => seq(repeat($.identifier), $.function_parameters),
@@ -86,13 +90,15 @@ module.exports = grammar({
 
     function_parameter: ($) => seq(optional("ref"), $.type, $.identifier),
 
+    //--=[ Common definitions  ]=--
+
+    identifier: (_) => /[a-zA-Z0-9_]+/,
+
     value: ($) =>
       choice($.string_literal, $.integer, $.decimal, $.boolean_literal),
     string: ($) => /"([^"\\]|\\.)*"/,
     integer: ($) => /\d+/,
     decimal: ($) => /\d+\.\d+/,
-
-    //--=[ String ]=-
     boolean_literal: (_) => choice("true", "false", "null"),
 
     //--=[ String ]=-
@@ -118,5 +124,84 @@ module.exports = grammar({
           /\\[abefnrtv'\"\\\?0]/,
         ),
       ),
+    //----------------------
+
+    // public function integer wf_copy_file (string as_file_from, string as_file_to, boolean ab_over_write)
+    function_implementations: ($) => repeat1($.function_implementation),
+    function_implementation: ($) =>
+      seq($.function_decl, optional($.function_body), $._end_of_function),
+
+    function_decl: ($) =>
+      seq(
+        $.visibility,
+        "function",
+        $.type,
+        $.function_name,
+        $.function_parameters,
+        ";",
+      ),
+    function_name: ($) => $.identifier,
+    function_body: ($) => $.code_block,
+    _end_of_function: ($) => choice("end function", "end subroutine"),
+
+    visibility: ($) => choice("public", "private", "protected"),
+
+    //--=[ CODE ]=--
+    code_block: ($) =>
+      repeat1(
+        prec(
+          1,
+          choice(
+            $.return_statement,
+            $.local_declaration,
+            $.comment,
+            $.expression,
+          ),
+        ),
+      ),
+
+    comment: (_) =>
+      token(
+        choice(
+          seq("//", /[^\n\r]*/),
+          seq("/*", /[^*]*\*+([^/*][^*]*\*+)*/, "/"),
+        ),
+      ),
+    return_statement: ($) =>
+      prec.right(3, seq("return", optional($.expression))),
+    local_declaration: ($) => $.variable,
+
+    expression: ($) =>
+      choice(
+        $.identifier,
+        $.unary_expression,
+        $.binary_expression,
+        $.assignment_expression,
+      ),
+
+    unary_expression: ($) =>
+      prec.left(
+        2,
+        choice(
+          seq("-", $.expression),
+          seq("!", $.expression),
+          // ...
+        ),
+      ),
+
+    binary_expression: ($) =>
+      choice(
+        prec.left(2, seq($.expression, "*", $.expression)),
+        prec.left(1, seq($.expression, "+", $.expression)),
+        // ...
+      ),
+
+    assignment_expression: ($) =>
+      seq(
+        field("left", $.lvalue_expression),
+        field("operator", choice("=", "+=", "-=", "*=", "/=", "%=")),
+        field("right", $.expression),
+      ),
+    lvalue_expression: ($) => $.identifier,
   },
 });
