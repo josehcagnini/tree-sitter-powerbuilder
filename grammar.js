@@ -13,6 +13,12 @@ module.exports = grammar({
   // extras: (_) => ["\r"],
 
   rules: {
+    //--=[ Common definitions  ]=--
+
+    identifier: (_) => /[a-zA-Z0-9_]+/,
+
+    //--------------------
+
     source_file: ($) =>
       seq(
         seq("HA$PBExportHeader$", $.class_name, ".", $.class_type),
@@ -24,6 +30,7 @@ module.exports = grammar({
     class_name: ($) => $.identifier,
     class_type: ($) => $.identifier,
 
+    //--=[ Forwad Type ]=--
     forward_types: ($) =>
       seq(
         "forward",
@@ -46,7 +53,7 @@ module.exports = grammar({
         "end type",
       ),
 
-    identifier: (_) => /[a-zA-Z0-9_]+/,
+    //--=[ Global Calss properties ]=--
 
     global_class_properties: ($) =>
       seq(
@@ -64,18 +71,20 @@ module.exports = grammar({
     forward_prototypes: ($) =>
       seq("forward prototypes", repeat($.function_prototype), "end prototypes"),
 
-    function_prototype: ($) => seq(repeat($.identifier), $.function_parameters),
-
-    function_parameters: ($) =>
-      seq("(", repeat(seq($.function_parameter, optional(","))), ")"),
-
-    function_parameter: ($) => seq(optional("ref"), $.type, $.identifier),
     class_properties: ($) => repeat1($.property),
 
     property: ($) => seq($.type, $.property_name, optional(seq("=", $.value))),
 
     type: ($) => /\w+/,
     property_name: ($) => /\w+/,
+
+    //--=[ Functions prototypes  ]=--
+    function_prototype: ($) => seq(repeat($.identifier), $.function_parameters),
+
+    function_parameters: ($) =>
+      seq("(", repeat(seq($.function_parameter, optional(","))), ")"),
+
+    function_parameter: ($) => seq(optional("ref"), $.type, $.identifier),
 
     value: ($) =>
       choice($.string_literal, $.integer, $.decimal, $.boolean_literal),
