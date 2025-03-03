@@ -1,58 +1,21 @@
 [
   {
-    "type": "assignment_expression",
+    "type": "assignment",
     "named": true,
-    "fields": {
-      "left": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "lvalue_expression",
-            "named": true
-          }
-        ]
-      },
-      "operator": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "%=",
-            "named": false
-          },
-          {
-            "type": "*=",
-            "named": false
-          },
-          {
-            "type": "+=",
-            "named": false
-          },
-          {
-            "type": "-=",
-            "named": false
-          },
-          {
-            "type": "/=",
-            "named": false
-          },
-          {
-            "type": "=",
-            "named": false
-          }
-        ]
-      },
-      "right": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "expression",
-            "named": true
-          }
-        ]
-      }
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "expression",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -114,7 +77,7 @@
       "required": true,
       "types": [
         {
-          "type": "variable",
+          "type": "class_variable",
           "named": true
         }
       ]
@@ -130,6 +93,56 @@
       "types": [
         {
           "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "class_variable",
+    "named": true,
+    "fields": {
+      "comma": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "=",
+            "named": false
+          },
+          {
+            "type": "[]",
+            "named": false
+          },
+          {
+            "type": "value",
+            "named": true
+          },
+          {
+            "type": "variable_name",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "type",
+          "named": true
+        },
+        {
+          "type": "value",
+          "named": true
+        },
+        {
+          "type": "variable_name",
           "named": true
         }
       ]
@@ -159,11 +172,11 @@
       "required": true,
       "types": [
         {
-          "type": "comment",
+          "type": "assignment",
           "named": true
         },
         {
-          "type": "expression",
+          "type": "comment",
           "named": true
         },
         {
@@ -178,6 +191,11 @@
     }
   },
   {
+    "type": "end_of_function",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "expression",
     "named": true,
     "fields": {},
@@ -185,10 +203,6 @@
       "multiple": false,
       "required": true,
       "types": [
-        {
-          "type": "assignment_expression",
-          "named": true
-        },
         {
           "type": "binary_expression",
           "named": true
@@ -198,7 +212,11 @@
           "named": true
         },
         {
-          "type": "unary_expression",
+          "type": "parenthesized_expression",
+          "named": true
+        },
+        {
+          "type": "value",
           "named": true
         }
       ]
@@ -303,6 +321,10 @@
       "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "end_of_function",
+          "named": true
+        },
         {
           "type": "function_body",
           "named": true
@@ -421,9 +443,13 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "newline",
+          "named": true
+        },
         {
           "type": "variable",
           "named": true
@@ -432,7 +458,7 @@
     }
   },
   {
-    "type": "lvalue_expression",
+    "type": "parenthesized_expression",
     "named": true,
     "fields": {},
     "children": {
@@ -440,7 +466,7 @@
       "required": true,
       "types": [
         {
-          "type": "identifier",
+          "type": "expression",
           "named": true
         }
       ]
@@ -451,11 +477,15 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": false,
-      "required": false,
+      "multiple": true,
+      "required": true,
       "types": [
         {
           "type": "expression",
+          "named": true
+        },
+        {
+          "type": "newline",
           "named": true
         }
       ]
@@ -531,21 +561,6 @@
     "fields": {}
   },
   {
-    "type": "unary_expression",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "expression",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "value",
     "named": true,
     "fields": {},
@@ -575,17 +590,44 @@
   {
     "type": "variable",
     "named": true,
-    "fields": {},
+    "fields": {
+      "comma": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "=",
+            "named": false
+          },
+          {
+            "type": "[]",
+            "named": false
+          },
+          {
+            "type": "expression",
+            "named": true
+          },
+          {
+            "type": "variable_name",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": true,
       "types": [
         {
-          "type": "type",
+          "type": "expression",
           "named": true
         },
         {
-          "type": "value",
+          "type": "type",
           "named": true
         },
         {
@@ -606,15 +648,7 @@
     "fields": {}
   },
   {
-    "type": "!",
-    "named": false
-  },
-  {
     "type": "\"",
-    "named": false
-  },
-  {
-    "type": "%=",
     "named": false
   },
   {
@@ -630,15 +664,7 @@
     "named": false
   },
   {
-    "type": "*=",
-    "named": false
-  },
-  {
     "type": "+",
-    "named": false
-  },
-  {
-    "type": "+=",
     "named": false
   },
   {
@@ -646,19 +672,7 @@
     "named": false
   },
   {
-    "type": "-",
-    "named": false
-  },
-  {
-    "type": "-=",
-    "named": false
-  },
-  {
     "type": ".",
-    "named": false
-  },
-  {
-    "type": "/=",
     "named": false
   },
   {
@@ -671,6 +685,10 @@
   },
   {
     "type": "HA$PBExportHeader$",
+    "named": false
+  },
+  {
+    "type": "[]",
     "named": false
   },
   {
@@ -739,6 +757,10 @@
   },
   {
     "type": "integer",
+    "named": true
+  },
+  {
+    "type": "newline",
     "named": true
   },
   {

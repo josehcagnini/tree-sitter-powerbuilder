@@ -11,6 +11,10 @@ module.exports = grammar({
   name: "powerbuilder",
 
   // extras: (_) => ["\r"],
+  // extras: ($) => [
+  //   // /\s/, // whitespace
+  //   $.newline,
+  // ],
 
   rules: {
     source_file: ($) =>
@@ -66,15 +70,24 @@ module.exports = grammar({
     forward_prototypes: ($) =>
       seq("forward prototypes", repeat($.function_prototype), "end prototypes"),
 
-    class_properties: ($) => repeat1($.variable),
+    class_properties: ($) => repeat1($.class_variable),
+
+    class_variable: ($) =>
+      seq(
+        $.type,
+        commaSep1(
+          seq($.variable_name, optional("[]"), optional(seq("=", $.value))),
+        ),
+      ),
 
     variable: ($) =>
-      prec.left(
-        2,
-        seq(
-          $.type,
-          repeat1(
-            seq($.variable_name, optional(seq("=", $.value)), optional(",")),
+      seq(
+        $.type,
+        commaSep1(
+          seq(
+            $.variable_name,
+            optional("[]"),
+            optional(seq("=", $.expression)),
           ),
         ),
       ),
@@ -91,8 +104,6 @@ module.exports = grammar({
     function_parameter: ($) => seq(optional("ref"), $.type, $.identifier),
 
     //--=[ Common definitions  ]=--
-
-    identifier: (_) => /[a-zA-Z0-9_]+/,
 
     value: ($) =>
       choice($.string_literal, $.integer, $.decimal, $.boolean_literal),
@@ -129,7 +140,7 @@ module.exports = grammar({
     // public function integer wf_copy_file (string as_file_from, string as_file_to, boolean ab_over_write)
     function_implementations: ($) => repeat1($.function_implementation),
     function_implementation: ($) =>
-      seq($.function_decl, optional($.function_body), $._end_of_function),
+      seq($.function_decl, optional($.function_body), $.end_of_function),
 
     function_decl: ($) =>
       seq(
@@ -142,7 +153,7 @@ module.exports = grammar({
       ),
     function_name: ($) => $.identifier,
     function_body: ($) => $.code_block,
-    _end_of_function: ($) => choice("end function", "end subroutine"),
+    end_of_function: ($) => choice("end function", "end subroutine"),
 
     visibility: ($) => choice("public", "private", "protected"),
 
@@ -155,7 +166,8 @@ module.exports = grammar({
             $.return_statement,
             $.local_declaration,
             $.comment,
-            $.expression,
+            prec(2, $.assignment),
+            // $.assignment_expression,
           ),
         ),
       ),
@@ -167,27 +179,23 @@ module.exports = grammar({
           seq("/*", /[^*]*\*+([^/*][^*]*\*+)*/, "/"),
         ),
       ),
+
     return_statement: ($) =>
-      prec.right(3, seq("return", optional($.expression))),
-    local_declaration: ($) => $.variable,
+      prec.right(3, seq("return", optional($.expression), $.newline)),
+
+    local_declaration: ($) => seq($.variable, $.newline),
 
     expression: ($) =>
       choice(
         $.identifier,
         $.unary_expression,
-        $.binary_expression,
-        $.assignment_expression,
+        // $.binary_expression,
+        // $.assignment_expression,
+        $.value,
+        $.operator,
       ),
 
-    unary_expression: ($) =>
-      prec.left(
-        2,
-        choice(
-          seq("-", $.expression),
-          seq("!", $.expression),
-          // ...
-        ),
-      ),
+    unary_expression: ($) => prec.left(2, seq("-", $.expression)),
 
     binary_expression: ($) =>
       choice(
@@ -197,11 +205,54 @@ module.exports = grammar({
       ),
 
     assignment_expression: ($) =>
-      seq(
-        field("left", $.lvalue_expression),
-        field("operator", choice("=", "+=", "-=", "*=", "/=", "%=")),
-        field("right", $.expression),
+      prec.left(
+        2,
+        seq(
+          field("left", $.lvalue_expression),
+          field("operator", "="),
+          field("right", $.expression),
+        ),
       ),
     lvalue_expression: ($) => $.identifier,
+
+    operator: ($) => choice("+", "-", "*", "/", "<>", ">=", "<=", "<", ">"),
+
+    newline: ($) => /[\n\r]/,
+    //-----------------------
+    assignment: ($) => seq($.identifier, "=", $.expression),
+
+    expression: ($) =>
+      choice(
+        $.binary_expression,
+        $.parenthesized_expression,
+        // $.number,
+        $.value,
+        $.identifier,
+      ),
+
+    binary_expression: ($) =>
+      prec.left(
+        choice(
+          seq($.expression, "*", $.expression),
+          seq($.expression, "+", $.expression),
+        ),
+      ),
+
+    parenthesized_expression: ($) => seq("(", $.expression, ")"),
+
+    // identifier: (_) => /[a-zA-Z0-9_]+/,
+    identifier: ($) => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    number: ($) => /\d+/,
   },
 });
+
+/*
+ * Creates a rule to match one or more of the rules separated by a comma
+ *
+ * @param {Rule} rule
+ *
+ * @returns {SeqRule}
+ */
+function commaSep1(rule) {
+  return seq(rule, repeat(field("comma", seq(",", rule))));
+}
