@@ -1,15 +1,21 @@
 {
+  "tree-sitter": [
+    {
+      "scope": "source.powerbuilder",
+      "file-types": ["srf", "sru", "srw"],
+      "injection-regex": "HA$PBExportHeader$"
+    }
+  ],
   "grammars": [
     {
       "name": "powerbuilder",
       "camelcase": "Powerbuilder",
       "scope": "source.powerbuilder",
-      "file-types": [
-        ".srf",
-        ".sru",
-        ".srw"
-      ],
-      "injection-regex": "^powerbuilder$"
+      "file-types": ["srf", "sru", "srw"],
+      "injection-regex": "HA$PBExportHeader$",
+      "path": ".",
+      "highlights": "queries/highlights.scm",
+      "tags": "queries/tags.scm"
     }
   ],
   "metadata": {
