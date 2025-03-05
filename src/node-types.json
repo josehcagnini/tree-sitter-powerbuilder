@@ -1,5 +1,35 @@
 [
   {
+    "type": "array_call",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "array_construction",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "array_construction",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "assignment",
     "named": true,
     "fields": {},
@@ -13,6 +43,10 @@
         },
         {
           "type": "newline",
+          "named": true
+        },
+        {
+          "type": "object_method_call",
           "named": true
         }
       ]
@@ -29,12 +63,21 @@
         {
           "type": "expression",
           "named": true
+        },
+        {
+          "type": "operator_compare",
+          "named": true
         }
       ]
     }
   },
   {
     "type": "boolean_literal",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "builtin_const",
     "named": true,
     "fields": {}
   },
@@ -59,21 +102,6 @@
     "fields": {}
   },
   {
-    "type": "class_properties",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "class_variable",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "class_type",
     "named": true,
     "fields": {}
@@ -81,34 +109,7 @@
   {
     "type": "class_variable",
     "named": true,
-    "fields": {
-      "comma": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": ",",
-            "named": false
-          },
-          {
-            "type": "=",
-            "named": false
-          },
-          {
-            "type": "[]",
-            "named": false
-          },
-          {
-            "type": "local_variable",
-            "named": true
-          },
-          {
-            "type": "value",
-            "named": true
-          }
-        ]
-      }
-    },
+    "fields": {},
     "children": {
       "multiple": true,
       "required": true,
@@ -137,7 +138,7 @@
       "required": true,
       "types": [
         {
-          "type": "class_properties",
+          "type": "type_variables",
           "named": true
         }
       ]
@@ -178,6 +179,10 @@
         {
           "type": "return_statement",
           "named": true
+        },
+        {
+          "type": "sql_block",
+          "named": true
         }
       ]
     }
@@ -188,9 +193,39 @@
     "fields": {}
   },
   {
+    "type": "end_of_event",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "end_of_function",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "end_of_sql",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "local_variable",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "event_body",
@@ -285,6 +320,25 @@
     }
   },
   {
+    "type": "event_prototype_protptype",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "event_prototype",
+          "named": true
+        },
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "expression",
     "named": true,
     "fields": {},
@@ -294,6 +348,10 @@
       "types": [
         {
           "type": "binary_expression",
+          "named": true
+        },
+        {
+          "type": "builtin_const",
           "named": true
         },
         {
@@ -575,7 +633,11 @@
           "named": true
         },
         {
-          "type": "class_properties",
+          "type": "newline",
+          "named": true
+        },
+        {
+          "type": "type_variables",
           "named": true
         }
       ]
@@ -584,13 +646,40 @@
   {
     "type": "if_statment",
     "named": true,
-    "fields": {},
+    "fields": {
+      "keyword": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "ELSEIF",
+            "named": false
+          },
+          {
+            "type": "END IF",
+            "named": false
+          },
+          {
+            "type": "IF",
+            "named": false
+          },
+          {
+            "type": "THEN",
+            "named": false
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": true,
       "types": [
         {
           "type": "code_block",
+          "named": true
+        },
+        {
+          "type": "comment",
           "named": true
         },
         {
@@ -617,7 +706,11 @@
           "named": true
         },
         {
-          "type": "variable",
+          "type": "type",
+          "named": true
+        },
+        {
+          "type": "variable_list",
           "named": true
         }
       ]
@@ -626,7 +719,17 @@
   {
     "type": "local_variable",
     "named": true,
-    "fields": {}
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "array_construction",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "object_method_call",
@@ -636,6 +739,10 @@
       "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "array_call",
+          "named": true
+        },
         {
           "type": "function_call",
           "named": true
@@ -653,6 +760,11 @@
   },
   {
     "type": "object_name",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "operator_compare",
     "named": true,
     "fields": {}
   },
@@ -754,6 +866,63 @@
     }
   },
   {
+    "type": "sql_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "end_of_sql",
+          "named": true
+        },
+        {
+          "type": "sql_into",
+          "named": true
+        },
+        {
+          "type": "sql_statments",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_into",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "local_variable",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sql_statments",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "local_variable",
+          "named": true
+        },
+        {
+          "type": "operator_compare",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "string_literal",
     "named": true,
     "fields": {},
@@ -768,6 +937,10 @@
         {
           "type": "string_literal_content",
           "named": true
+        },
+        {
+          "type": "string_literal_content_single",
+          "named": true
         }
       ]
     }
@@ -778,9 +951,33 @@
     "fields": {}
   },
   {
+    "type": "string_literal_content_single",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "type",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "type_variables",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "class_variable",
+          "named": true
+        },
+        {
+          "type": "event_prototype_protptype",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "value",
@@ -810,7 +1007,7 @@
     }
   },
   {
-    "type": "variable",
+    "type": "variable_list",
     "named": true,
     "fields": {
       "comma": {
@@ -851,10 +1048,6 @@
         {
           "type": "local_variable",
           "named": true
-        },
-        {
-          "type": "type",
-          "named": true
         }
       ]
     }
@@ -863,6 +1056,10 @@
     "type": "visibility",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "!",
+    "named": false
   },
   {
     "type": "\"",
@@ -893,7 +1090,19 @@
     "named": false
   },
   {
+    "type": "-",
+    "named": false
+  },
+  {
     "type": ".",
+    "named": false
+  },
+  {
+    "type": "/",
+    "named": false
+  },
+  {
+    "type": ":",
     "named": false
   },
   {
@@ -901,11 +1110,51 @@
     "named": false
   },
   {
+    "type": "<",
+    "named": false
+  },
+  {
+    "type": "<=",
+    "named": false
+  },
+  {
+    "type": "<>",
+    "named": false
+  },
+  {
     "type": "=",
     "named": false
   },
   {
+    "type": ">",
+    "named": false
+  },
+  {
+    "type": ">=",
+    "named": false
+  },
+  {
+    "type": "AND",
+    "named": false
+  },
+  {
+    "type": "DELETE",
+    "named": false
+  },
+  {
+    "type": "ELSE",
+    "named": false
+  },
+  {
+    "type": "ELSEIF",
+    "named": false
+  },
+  {
     "type": "END IF",
+    "named": false
+  },
+  {
+    "type": "FALSE",
     "named": false
   },
   {
@@ -917,11 +1166,47 @@
     "named": false
   },
   {
+    "type": "INSERT",
+    "named": false
+  },
+  {
+    "type": "INTO",
+    "named": false
+  },
+  {
+    "type": "OR",
+    "named": false
+  },
+  {
+    "type": "SELECT",
+    "named": false
+  },
+  {
     "type": "THEN",
     "named": false
   },
   {
+    "type": "TRUE",
+    "named": false
+  },
+  {
+    "type": "UPDATE",
+    "named": false
+  },
+  {
+    "type": "USING",
+    "named": false
+  },
+  {
+    "type": "[",
+    "named": false
+  },
+  {
     "type": "[]",
+    "named": false
+  },
+  {
+    "type": "]",
     "named": false
   },
   {
@@ -931,6 +1216,10 @@
   {
     "type": "decimal",
     "named": true
+  },
+  {
+    "type": "end event",
+    "named": false
   },
   {
     "type": "end forward",
@@ -955,10 +1244,6 @@
   {
     "type": "end variables",
     "named": false
-  },
-  {
-    "type": "end_of_event",
-    "named": true
   },
   {
     "type": "escape_sequence",

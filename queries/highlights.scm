@@ -6,11 +6,24 @@
   ";"
   "."
   ","
+  "["
+  "]"
+  "("
+  ")"
 ] @punctuation.delimiter
 
-[
-"+" "*"] @operator
 
+[
+ "IF"
+ "THEN"
+ "END IF"
+ "ELSE"
+ "ELSEIF"
+ ] @keyword
+
+
+((operator_compare) @operator)
+((builtin_const) @keyword)
 
 ((class_name) @class.name)
 
@@ -24,6 +37,7 @@
 ((integer) @number)
 ((comment) @comment)
 ((string_literal_content) @string)
+((string_literal_content_single) @string)
 ((function_name) @function)
 ((visibility) @visibility)
 ((return_statement) @keyword.return)

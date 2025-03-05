@@ -1,4 +1,4 @@
-/**
+/*
  * @file a parser for Power Builder script language
  * @author Aliaxander Zhukau <sashazjukov@gmail.com>
  * @license MIT
@@ -10,13 +10,8 @@
 module.exports = grammar({
   name: "powerbuilder",
 
-  // extras: (_) => ["\r"],
-  // extras: ($) => [
-  //   // /\s/, // whitespace
-  //   $.newline,
-  // ],
-
   rules: {
+    // Top-level structure
     source_file: ($) =>
       seq(
         seq("HA$PBExportHeader$", $.class_name, ".", $.class_type),
@@ -25,13 +20,31 @@ module.exports = grammar({
         optional($.global_class_dummy),
         $.class_variables,
         $.forward_prototypes,
-        optional($.function_implementations),
-        optional($.event_implementations),
+        choice(
+          optional($.event_implementations),
+          optional($.function_implementations),
+        ),
       ),
+
+    // optional($.event_prototype_protptypes),
+    // Class structure
     class_name: ($) => field("classname", $._idt),
     class_type: ($) => $._idt,
+    global_class_properties: ($) =>
+      seq(
+        field("dummy", "global type"),
+        $.class_name,
+        "from",
+        $.class_name,
+        $.newline,
+        $.type_variables,
+        "end type",
+      ),
 
-    //--=[ Forwad Type ]=--
+    class_inherit_from: ($) =>
+      seq("global type", $.class_name, "from", $.class_name, "end type"),
+
+    // Forward declarations
     forward_types: ($) =>
       seq(
         "forward",
@@ -39,10 +52,6 @@ module.exports = grammar({
         repeat($.forward_type),
         "end forward",
       ),
-
-    class_inherit_from: ($) =>
-      seq("global type", $.class_name, "from", $.class_name, "end type"),
-
     forward_type: ($) =>
       seq(
         "type",
@@ -54,44 +63,18 @@ module.exports = grammar({
         "end type",
       ),
 
-    //--=[ Global Calss properties ]=--
-
-    global_class_properties: ($) =>
-      seq(
-        field("dummy", "global type"),
-        $.class_name,
-        "from",
-        $.class_name,
-        $.class_properties,
-        "end type",
-      ),
-
-    dummy_keyword: ($) => $._idt,
-    global_class_dummy: ($) => seq($.dummy_keyword, $._idt, $._idt),
-
+    // Variables and properties
     class_variables: ($) =>
-      seq("type variables", $.class_properties, "end variables"),
-
-    forward_prototypes: ($) =>
-      seq(
-        "forward prototypes",
-        repeat(seq($.function_prototype, $.newline)),
-        "end prototypes",
-      ),
-
-    class_properties: ($) => repeat1($.class_variable),
-
+      seq("type variables", $.type_variables, "end variables"),
+    type_variables: ($) =>
+      repeat1(choice($.class_variable, $.event_prototype_protptype)),
     class_variable: ($) =>
       seq(
         $.type,
-        commaSep1(
-          seq($.local_variable, optional("[]"), optional(seq("=", $.value))),
-        ),
+        seq($.local_variable, optional("[]"), optional(seq("=", $.value))),
       ),
-
-    variable: ($) =>
+    variable_list: ($) =>
       seq(
-        optional($.type),
         commaSep1(
           seq(
             $.local_variable,
@@ -101,10 +84,13 @@ module.exports = grammar({
         ),
       ),
 
-    type: ($) => $._idt,
-    local_variable: ($) => prec(3, $._idt),
-
-    //--=[ Functions prototypes  ]=--
+    // Function prototypes
+    forward_prototypes: ($) =>
+      seq(
+        "forward prototypes",
+        repeat(seq($.function_prototype, $.newline)),
+        "end prototypes",
+      ),
     function_prototype: ($) =>
       seq(
         $.visibility,
@@ -113,27 +99,130 @@ module.exports = grammar({
         $.function_name,
         $.function_parameters,
       ),
-
     function_parameters: ($) =>
       seq("(", repeat(seq($.function_parameter, optional(","))), ")"),
 
-    function_parameter: ($) => seq(optional("ref"), $.type, $.local_variable),
+    function_parameter: ($) =>
+      seq(optional("ref"), $.type, $.local_variable, optional(seq("[", "]"))),
 
-    //--=[ Common definitions  ]=--
+    // Function implementations
+    function_implementations: ($) => repeat1($.function_implementation),
+    function_implementation: ($) =>
+      seq(
+        $.function_prototype,
+        ";",
+        optional($.function_body),
+        $.end_of_function,
+      ),
+    function_name: ($) => prec(10, $._idt),
+    function_body: ($) => $.code_block,
+    end_of_function: ($) => choice("end function", "end subroutine"),
 
+    // Event handling
+    event_prototype_protptypes: ($) => repeat1($.event_prototype_protptype),
+    event_prototype_protptype: ($) => seq($.event_prototype, $.newline),
+
+    event_implementations: ($) => repeat1($.event_implementation),
+    event_implementation: ($) =>
+      seq($.event_prototype, ";", $.event_body, $.end_of_event),
+    event_prototype: ($) => seq("event", $.event_name, $.event_parameters),
+
+    event_name: ($) => prec(10, $._idt),
+    event_parameters: ($) => $.function_parameters,
+    event_body: ($) => $.code_block,
+    end_of_event: ($) => prec(20, seq("end event", $.newline)),
+
+    sql_block: ($) =>
+      prec(
+        20,
+        seq(
+          choice("SELECT", "UPDATE", "DELETE", "INSERT"),
+          optional($.sql_into),
+          $.sql_statments,
+          $.end_of_sql,
+        ),
+      ),
+
+    sql_into: ($) =>
+      prec.right(
+        seq("INTO", repeat(seq(":", $.local_variable, optional(",")))),
+      ),
+    sql_statments: ($) =>
+      repeat1(
+        choice(
+          $._idt,
+          $.operator_compare,
+          seq(optional(":"), $.local_variable),
+        ),
+      ),
+    end_of_sql: ($) => seq("USING", $.local_variable, ";"),
+
+    // Code blocks and control structures
+    code_block: ($) =>
+      prec.right(
+        repeat1(
+          prec(
+            1,
+            choice(
+              $.return_statement,
+              $.local_declaration,
+              $.comment,
+              prec(2, $.assignment),
+              $.function_call,
+              $.pb_constructions,
+              $.object_method_call,
+              $.sql_block,
+            ),
+          ),
+        ),
+      ),
+
+    pb_constructions: ($) => choice($.if_statment),
+    if_statment: ($) =>
+      seq(
+        field("keyword", choice("IF", "ELSEIF")),
+        $.expression,
+        field("keyword", "THEN"),
+        optional($.comment),
+        $.newline,
+        optional($.code_block),
+        optional(seq("ELSE", optional($.comment))),
+        optional($.code_block),
+        field("keyword", "END IF"),
+        $.newline,
+      ),
+
+    // Expressions
+    expression: ($) =>
+      choice(
+        $.binary_expression,
+        $.parenthesized_expression,
+        $.value,
+        $.local_variable,
+        $.builtin_const,
+        $.function_call,
+        $.object_method_call,
+      ),
+    unary_expression: ($) =>
+      prec.left(
+        17,
+        seq(field("operator", "NOT"), field("argument", $.expression)),
+      ),
+
+    binary_expression: ($) =>
+      prec.left(choice(seq($.expression, $.operator_compare, $.expression))),
+    parenthesized_expression: ($) => seq("(", $.expression, ")"),
+    assignment: ($) =>
+      seq($.object_method_call, "=", repeat1($.expression), $.newline),
+
+    // Literals and values
     value: ($) =>
       choice($.string_literal, $.integer, $.decimal, $.boolean_literal),
-    string: ($) => /"([^"\\]|\\.)*"/,
-    integer: ($) => /\d+/,
-    decimal: ($) => /\d+\.\d+/,
-    boolean_literal: (_) => choice("true", "false", "null"),
-
-    //--=[ String ]=-
     string_literal: ($) =>
       choice(
         seq(
           "'",
-          repeat(choice($.string_literal_content, $.escape_sequence)),
+          repeat(choice($.string_literal_content_single, $.escape_sequence)),
           "'",
         ),
         seq(
@@ -142,13 +231,53 @@ module.exports = grammar({
           '"',
         ),
       ),
+    integer: ($) => /\d+/,
+    decimal: ($) => /\d+\.\d+/,
+    boolean_literal: ($) => choice("TRUE", "true", "FALSE", "false", "null"),
+    operator_compare: ($) =>
+      choice("+", "-", "*", "/", ">", "<", "=", "<>", ">=", "<=", "OR", "AND"),
 
+    // Common components
+    visibility: ($) => choice("public", "private", "protected"),
+    type: ($) => $._idt,
+    local_variable: ($) =>
+      prec.left(3, seq($._idt, optional($.array_construction))),
+    builtin_const: ($) => prec(4, seq($._idt, "!")),
+    object_method_call: ($) =>
+      seq(
+        $.object_name,
+        ".",
+        choice(
+          $.object_name,
+          $.object_method_call,
+          $.function_call,
+          $.array_call,
+        ),
+      ),
+    function_call: ($) => seq($.function_name, $.function_call_parameters),
+    function_call_parameters: ($) =>
+      seq("(", optional(repeat1(seq($.expression, optional(",")))), ")"),
+
+    // Low-level tokens
+    _idt: ($) => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    newline: ($) => /[\n\r]/,
+    comment: (_) =>
+      token(
+        choice(
+          seq("//", /[^\n\r]*/),
+          seq("/*", /[^*]*\*+([^/*][^*]*\*+)*/, "/"),
+        ),
+      ),
+    string_literal_content_single: (_) =>
+      choice(
+        token.immediate(prec(1, /[^'\\\n]+/)),
+        prec(2, token.immediate(seq("\\", /[^abefnrtv'\"\\\?0]/))),
+      ),
     string_literal_content: (_) =>
       choice(
         token.immediate(prec(1, /[^"\\\n]+/)),
         prec(2, token.immediate(seq("\\", /[^abefnrtv'\"\\\?0]/))),
       ),
-
     escape_sequence: (_) =>
       token(
         choice(
@@ -158,155 +287,20 @@ module.exports = grammar({
           /\\[abefnrtv'\"\\\?0]/,
         ),
       ),
-    //----------------------
-    event_name: ($) => prec(10, $._idt),
-    event_body: ($) => $.code_block,
-    end_of_event: ($) => "end event",
-    event_parameters: ($) => $.function_parameters,
 
-    event_prototype: ($) => seq("event", $.event_name, $.event_parameters, ";"),
-
-    event_implementations: ($) => repeat1($.event_implementation),
-
-    event_implementation: ($) =>
-      seq($.event_prototype, optional($.event_body), $.end_of_event),
-    // public function integer wf_copy_file (string as_file_from, string as_file_to, boolean ab_over_write)
-    function_implementations: ($) => repeat1($.function_implementation),
-    function_implementation: ($) =>
-      seq(
-        $.function_prototype,
-        ";",
-        optional($.function_body),
-        $.end_of_function,
-      ),
-
-    // function_decl: ($) =>
-    //   seq(
-    //     $.visibility,
-    //     "function",
-    //     $.type,
-    //     $.function_name,
-    //     $.function_parameters,
-    //     ";",
-    //   ),
-    function_name: ($) => prec(10, $._idt),
-    function_body: ($) => $.code_block,
-    end_of_function: ($) => choice("end function", "end subroutine"),
-
-    visibility: ($) => choice("public", "private", "protected"),
-
-    //--=[ CODE ]=--
-    code_block: ($) =>
-      repeat1(
-        prec(
-          1,
-          choice(
-            $.return_statement,
-            $.local_declaration,
-            $.comment,
-            prec(2, $.assignment),
-            $.function_call,
-            $.pb_constructions,
-            $.object_method_call,
-            // $.assignment_expression,
-          ),
-        ),
-      ),
-
-    comment: (_) =>
-      token(
-        choice(
-          seq("//", /[^\n\r]*/),
-          seq("/*", /[^*]*\*+([^/*][^*]*\*+)*/, "/"),
-        ),
-      ),
-
+    // Helper rules
+    global_class_dummy: ($) => seq($.dummy_keyword, $._idt, $._idt),
+    dummy_keyword: ($) => $._idt,
+    array_construction: ($) => seq("[", $.expression, "]"),
+    object_name: ($) => $._idt,
+    array_call: ($) => seq($._idt, $.array_construction),
     return_statement: ($) =>
       prec.right(3, seq("return", optional($.expression), $.newline)),
-
-    local_declaration: ($) => prec(-10, seq($.variable, $.newline)),
-
-    // expression: ($) =>
-    //   choice(
-    //     $._idt,
-    //     $.unary_expression,
-    //     // $.binary_expression,
-    //     // $.assignment_expression,
-    //     $.value,
-    //     $.operator,
-    //   ),
-
-    unary_expression: ($) => prec.left(2, seq("-", $.expression)),
-
-    binary_expression: ($) =>
-      choice(
-        prec.left(2, seq($.expression, "*", $.expression)),
-        prec.left(1, seq($.expression, "+", $.expression)),
-        // ...
-      ),
-
-    assignment_expression: ($) =>
-      prec.left(
-        2,
-        seq(
-          field("left", $.lvalue_expression),
-          field("operator", "="),
-          field("right", $.expression),
-        ),
-      ),
-    lvalue_expression: ($) => $._idt,
-
-    operator: ($) => choice("+", "-", "*", "/", "<>", ">=", "<=", "<", ">"),
-
-    newline: ($) => /[\n\r]/,
-    //-----------------------
-    assignment: ($) => seq($._idt, "=", $.expression, $.newline),
-
-    object_name: ($) => $._idt,
-
-    object_method_call: ($) =>
-      seq($.object_name, ".", choice($.object_method_call, $.function_call)),
-    if_statment: ($) =>
-      seq(
-        "IF",
-        $.expression,
-        "THEN",
-        $.newline,
-        $.code_block,
-        "END IF",
-        $.newline,
-      ),
-    pb_constructions: ($) => choice($.if_statment),
-    expression: ($) =>
-      choice(
-        $.binary_expression,
-        $.parenthesized_expression,
-        // $.number,
-        $.value,
-        $.local_variable,
-        $.function_call,
-        $.object_method_call,
-      ),
-
-    binary_expression: ($) =>
-      prec.left(
-        choice(
-          seq($.expression, "*", $.expression),
-          seq($.expression, "+", $.expression),
-        ),
-      ),
-
-    parenthesized_expression: ($) => seq("(", $.expression, ")"),
-
-    // _idt: (_) => /[a-zA-Z0-9_]+/,
-    _idt: ($) => /[a-zA-Z_][a-zA-Z0-9_]*/,
-    number: ($) => /\d+/,
-
-    function_call: ($) => seq($.function_name, $.function_call_parameters),
-    function_call_parameters: ($) =>
-      seq("(", optional(repeat1(seq($.expression, optional(",")))), ")"),
+    local_declaration: ($) => seq(optional($.type), $.variable_list, $.newline),
   },
 });
+
+// ... existing helper functions ...
 
 /*
  * Creates a rule to match one or more of the rules separated by a comma
