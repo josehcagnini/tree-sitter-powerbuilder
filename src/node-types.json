@@ -14,6 +14,10 @@
         {
           "type": "identifier",
           "named": true
+        },
+        {
+          "type": "newline",
+          "named": true
         }
       ]
     }
@@ -47,7 +51,7 @@
       "required": true,
       "types": [
         {
-          "type": "identifier",
+          "type": "class_name",
           "named": true
         }
       ]
@@ -56,16 +60,17 @@
   {
     "type": "class_name",
     "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "identifier",
-          "named": true
-        }
-      ]
+    "fields": {
+      "classname": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -119,11 +124,11 @@
             "named": false
           },
           {
-            "type": "value",
+            "type": "local_variable",
             "named": true
           },
           {
-            "type": "variable_name",
+            "type": "value",
             "named": true
           }
         ]
@@ -134,15 +139,15 @@
       "required": true,
       "types": [
         {
+          "type": "local_variable",
+          "named": true
+        },
+        {
           "type": "type",
           "named": true
         },
         {
           "type": "value",
-          "named": true
-        },
-        {
-          "type": "variable_name",
           "named": true
         }
       ]
@@ -180,7 +185,19 @@
           "named": true
         },
         {
+          "type": "function_call",
+          "named": true
+        },
+        {
           "type": "local_declaration",
+          "named": true
+        },
+        {
+          "type": "object_method_call",
+          "named": true
+        },
+        {
+          "type": "pb_constructions",
           "named": true
         },
         {
@@ -191,9 +208,126 @@
     }
   },
   {
+    "type": "dummy_keyword",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "end_of_function",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "event_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "code_block",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "event_implementation",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "end_of_event",
+          "named": true
+        },
+        {
+          "type": "event_body",
+          "named": true
+        },
+        {
+          "type": "event_prototype",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "event_implementations",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "event_implementation",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "event_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "event_parameters",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "function_parameters",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "event_prototype",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "event_name",
+          "named": true
+        },
+        {
+          "type": "event_parameters",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "expression",
@@ -208,7 +342,15 @@
           "named": true
         },
         {
-          "type": "identifier",
+          "type": "function_call",
+          "named": true
+        },
+        {
+          "type": "local_variable",
+          "named": true
+        },
+        {
+          "type": "object_method_call",
           "named": true
         },
         {
@@ -240,13 +382,24 @@
   {
     "type": "forward_type",
     "named": true,
-    "fields": {},
+    "fields": {
+      "InstanceControlName": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "class_name",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": true,
       "types": [
         {
-          "type": "identifier",
+          "type": "class_name",
           "named": true
         }
       ]
@@ -287,7 +440,7 @@
     }
   },
   {
-    "type": "function_decl",
+    "type": "function_call",
     "named": true,
     "fields": {},
     "children": {
@@ -295,19 +448,30 @@
       "required": true,
       "types": [
         {
+          "type": "function_call_parameters",
+          "named": true
+        },
+        {
           "type": "function_name",
           "named": true
         },
         {
-          "type": "function_parameters",
+          "type": "newline",
           "named": true
-        },
+        }
+      ]
+    }
+  },
+  {
+    "type": "function_call_parameters",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
         {
-          "type": "type",
-          "named": true
-        },
-        {
-          "type": "visibility",
+          "type": "expression",
           "named": true
         }
       ]
@@ -330,7 +494,7 @@
           "named": true
         },
         {
-          "type": "function_decl",
+          "type": "function_prototype",
           "named": true
         }
       ]
@@ -375,7 +539,7 @@
       "required": true,
       "types": [
         {
-          "type": "identifier",
+          "type": "local_variable",
           "named": true
         },
         {
@@ -409,7 +573,34 @@
       "required": true,
       "types": [
         {
+          "type": "function_name",
+          "named": true
+        },
+        {
           "type": "function_parameters",
+          "named": true
+        },
+        {
+          "type": "type",
+          "named": true
+        },
+        {
+          "type": "visibility",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "global_class_dummy",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "dummy_keyword",
           "named": true
         },
         {
@@ -422,17 +613,51 @@
   {
     "type": "global_class_properties",
     "named": true,
+    "fields": {
+      "dummy": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "global type",
+            "named": false
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "class_name",
+          "named": true
+        },
+        {
+          "type": "class_properties",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "if_statment",
+    "named": true,
     "fields": {},
     "children": {
       "multiple": true,
       "required": true,
       "types": [
         {
-          "type": "class_properties",
+          "type": "code_block",
           "named": true
         },
         {
-          "type": "identifier",
+          "type": "expression",
+          "named": true
+        },
+        {
+          "type": "newline",
           "named": true
         }
       ]
@@ -458,6 +683,59 @@
     }
   },
   {
+    "type": "local_variable",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_method_call",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "function_call",
+          "named": true
+        },
+        {
+          "type": "object_method_call",
+          "named": true
+        },
+        {
+          "type": "object_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "object_name",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "parenthesized_expression",
     "named": true,
     "fields": {},
@@ -467,6 +745,21 @@
       "types": [
         {
           "type": "expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "pb_constructions",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "if_statment",
           "named": true
         }
       ]
@@ -513,6 +806,10 @@
           "named": true
         },
         {
+          "type": "event_implementations",
+          "named": true
+        },
+        {
           "type": "forward_prototypes",
           "named": true
         },
@@ -522,6 +819,10 @@
         },
         {
           "type": "function_implementations",
+          "named": true
+        },
+        {
+          "type": "global_class_dummy",
           "named": true
         },
         {
@@ -558,7 +859,17 @@
   {
     "type": "type",
     "named": true,
-    "fields": {}
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "value",
@@ -612,7 +923,7 @@
             "named": true
           },
           {
-            "type": "variable_name",
+            "type": "local_variable",
             "named": true
           }
         ]
@@ -627,20 +938,15 @@
           "named": true
         },
         {
-          "type": "type",
+          "type": "local_variable",
           "named": true
         },
         {
-          "type": "variable_name",
+          "type": "type",
           "named": true
         }
       ]
     }
-  },
-  {
-    "type": "variable_name",
-    "named": true,
-    "fields": {}
   },
   {
     "type": "visibility",
@@ -684,7 +990,19 @@
     "named": false
   },
   {
+    "type": "END IF",
+    "named": false
+  },
+  {
     "type": "HA$PBExportHeader$",
+    "named": false
+  },
+  {
+    "type": "IF",
+    "named": false
+  },
+  {
+    "type": "THEN",
     "named": false
   },
   {
@@ -724,8 +1042,16 @@
     "named": false
   },
   {
+    "type": "end_of_event",
+    "named": true
+  },
+  {
     "type": "escape_sequence",
     "named": true
+  },
+  {
+    "type": "event",
+    "named": false
   },
   {
     "type": "false",
@@ -785,6 +1111,10 @@
   },
   {
     "type": "return",
+    "named": false
+  },
+  {
+    "type": "subroutine",
     "named": false
   },
   {

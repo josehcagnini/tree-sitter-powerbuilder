@@ -22,11 +22,13 @@ module.exports = grammar({
         seq("HA$PBExportHeader$", $.class_name, ".", $.class_type),
         $.forward_types,
         $.global_class_properties,
+        optional($.global_class_dummy),
         $.class_variables,
         $.forward_prototypes,
         optional($.function_implementations),
+        optional($.event_implementations),
       ),
-    class_name: ($) => $.identifier,
+    class_name: ($) => field("classname", $.identifier),
     class_type: ($) => $.identifier,
 
     //--=[ Forwad Type ]=--
@@ -39,16 +41,16 @@ module.exports = grammar({
       ),
 
     class_inherit_from: ($) =>
-      seq("global type", $.identifier, "from", $.identifier, "end type"),
+      seq("global type", $.class_name, "from", $.class_name, "end type"),
 
     forward_type: ($) =>
       seq(
         "type",
-        $.identifier,
+        field("InstanceControlName", $.class_name),
         "from",
-        $.identifier,
+        $.class_name,
         "within",
-        $.identifier,
+        $.class_name,
         "end type",
       ),
 
@@ -56,13 +58,16 @@ module.exports = grammar({
 
     global_class_properties: ($) =>
       seq(
-        "global type",
-        $.identifier,
+        field("dummy", "global type"),
+        $.class_name,
         "from",
-        $.identifier,
+        $.class_name,
         $.class_properties,
         "end type",
       ),
+
+    dummy_keyword: ($) => $.identifier,
+    global_class_dummy: ($) => seq($.dummy_keyword, $.identifier, $.identifier),
 
     class_variables: ($) =>
       seq("type variables", $.class_properties, "end variables"),
@@ -76,32 +81,39 @@ module.exports = grammar({
       seq(
         $.type,
         commaSep1(
-          seq($.variable_name, optional("[]"), optional(seq("=", $.value))),
+          seq($.local_variable, optional("[]"), optional(seq("=", $.value))),
         ),
       ),
 
     variable: ($) =>
       seq(
-        $.type,
+        optional($.type),
         commaSep1(
           seq(
-            $.variable_name,
+            $.local_variable,
             optional("[]"),
             optional(seq("=", $.expression)),
           ),
         ),
       ),
 
-    type: ($) => /\w+/,
-    variable_name: ($) => /\w+/,
+    type: ($) => $.identifier,
+    local_variable: ($) => prec(3, $.identifier),
 
     //--=[ Functions prototypes  ]=--
-    function_prototype: ($) => seq(repeat($.identifier), $.function_parameters),
+    function_prototype: ($) =>
+      seq(
+        $.visibility,
+        choice("function", "subroutine"),
+        $.type,
+        $.function_name,
+        $.function_parameters,
+      ),
 
     function_parameters: ($) =>
       seq("(", repeat(seq($.function_parameter, optional(","))), ")"),
 
-    function_parameter: ($) => seq(optional("ref"), $.type, $.identifier),
+    function_parameter: ($) => seq(optional("ref"), $.type, $.local_variable),
 
     //--=[ Common definitions  ]=--
 
@@ -136,22 +148,37 @@ module.exports = grammar({
         ),
       ),
     //----------------------
+    event_name: ($) => prec(10, $.identifier),
+    event_body: ($) => $.code_block,
+    end_of_event: ($) => "end event",
+    event_parameters: ($) => $.function_parameters,
 
+    event_prototype: ($) => seq("event", $.event_name, $.event_parameters, ";"),
+
+    event_implementations: ($) => repeat1($.event_implementation),
+
+    event_implementation: ($) =>
+      seq($.event_prototype, optional($.event_body), $.end_of_event),
     // public function integer wf_copy_file (string as_file_from, string as_file_to, boolean ab_over_write)
     function_implementations: ($) => repeat1($.function_implementation),
     function_implementation: ($) =>
-      seq($.function_decl, optional($.function_body), $.end_of_function),
-
-    function_decl: ($) =>
       seq(
-        $.visibility,
-        "function",
-        $.type,
-        $.function_name,
-        $.function_parameters,
+        $.function_prototype,
         ";",
+        optional($.function_body),
+        $.end_of_function,
       ),
-    function_name: ($) => $.identifier,
+
+    // function_decl: ($) =>
+    //   seq(
+    //     $.visibility,
+    //     "function",
+    //     $.type,
+    //     $.function_name,
+    //     $.function_parameters,
+    //     ";",
+    //   ),
+    function_name: ($) => prec(10, $.identifier),
     function_body: ($) => $.code_block,
     end_of_function: ($) => choice("end function", "end subroutine"),
 
@@ -167,6 +194,9 @@ module.exports = grammar({
             $.local_declaration,
             $.comment,
             prec(2, $.assignment),
+            $.function_call,
+            $.pb_constructions,
+            $.object_method_call,
             // $.assignment_expression,
           ),
         ),
@@ -183,17 +213,17 @@ module.exports = grammar({
     return_statement: ($) =>
       prec.right(3, seq("return", optional($.expression), $.newline)),
 
-    local_declaration: ($) => seq($.variable, $.newline),
+    local_declaration: ($) => prec(-10, seq($.variable, $.newline)),
 
-    expression: ($) =>
-      choice(
-        $.identifier,
-        $.unary_expression,
-        // $.binary_expression,
-        // $.assignment_expression,
-        $.value,
-        $.operator,
-      ),
+    // expression: ($) =>
+    //   choice(
+    //     $.identifier,
+    //     $.unary_expression,
+    //     // $.binary_expression,
+    //     // $.assignment_expression,
+    //     $.value,
+    //     $.operator,
+    //   ),
 
     unary_expression: ($) => prec.left(2, seq("-", $.expression)),
 
@@ -219,15 +249,32 @@ module.exports = grammar({
 
     newline: ($) => /[\n\r]/,
     //-----------------------
-    assignment: ($) => seq($.identifier, "=", $.expression),
+    assignment: ($) => seq($.identifier, "=", $.expression, $.newline),
 
+    object_name: ($) => $.identifier,
+
+    object_method_call: ($) =>
+      seq($.object_name, ".", choice($.object_method_call, $.function_call)),
+    if_statment: ($) =>
+      seq(
+        "IF",
+        $.expression,
+        "THEN",
+        $.newline,
+        $.code_block,
+        "END IF",
+        $.newline,
+      ),
+    pb_constructions: ($) => choice($.if_statment),
     expression: ($) =>
       choice(
         $.binary_expression,
         $.parenthesized_expression,
         // $.number,
         $.value,
-        $.identifier,
+        $.local_variable,
+        $.function_call,
+        $.object_method_call,
       ),
 
     binary_expression: ($) =>
@@ -243,6 +290,11 @@ module.exports = grammar({
     // identifier: (_) => /[a-zA-Z0-9_]+/,
     identifier: ($) => /[a-zA-Z_][a-zA-Z0-9_]*/,
     number: ($) => /\d+/,
+
+    function_call: ($) =>
+      seq($.function_name, $.function_call_parameters, $.newline),
+    function_call_parameters: ($) =>
+      seq("(", optional(repeat1(seq($.expression, optional(",")))), ")"),
   },
 });
 
