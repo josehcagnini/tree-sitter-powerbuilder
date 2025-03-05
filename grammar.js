@@ -28,8 +28,8 @@ module.exports = grammar({
         optional($.function_implementations),
         optional($.event_implementations),
       ),
-    class_name: ($) => field("classname", $.identifier),
-    class_type: ($) => $.identifier,
+    class_name: ($) => field("classname", $._idt),
+    class_type: ($) => $._idt,
 
     //--=[ Forwad Type ]=--
     forward_types: ($) =>
@@ -66,14 +66,18 @@ module.exports = grammar({
         "end type",
       ),
 
-    dummy_keyword: ($) => $.identifier,
-    global_class_dummy: ($) => seq($.dummy_keyword, $.identifier, $.identifier),
+    dummy_keyword: ($) => $._idt,
+    global_class_dummy: ($) => seq($.dummy_keyword, $._idt, $._idt),
 
     class_variables: ($) =>
       seq("type variables", $.class_properties, "end variables"),
 
     forward_prototypes: ($) =>
-      seq("forward prototypes", repeat($.function_prototype), "end prototypes"),
+      seq(
+        "forward prototypes",
+        repeat(seq($.function_prototype, $.newline)),
+        "end prototypes",
+      ),
 
     class_properties: ($) => repeat1($.class_variable),
 
@@ -97,8 +101,8 @@ module.exports = grammar({
         ),
       ),
 
-    type: ($) => $.identifier,
-    local_variable: ($) => prec(3, $.identifier),
+    type: ($) => $._idt,
+    local_variable: ($) => prec(3, $._idt),
 
     //--=[ Functions prototypes  ]=--
     function_prototype: ($) =>
@@ -126,10 +130,17 @@ module.exports = grammar({
 
     //--=[ String ]=-
     string_literal: ($) =>
-      seq(
-        '"',
-        repeat(choice($.string_literal_content, $.escape_sequence)),
-        '"',
+      choice(
+        seq(
+          "'",
+          repeat(choice($.string_literal_content, $.escape_sequence)),
+          "'",
+        ),
+        seq(
+          '"',
+          repeat(choice($.string_literal_content, $.escape_sequence)),
+          '"',
+        ),
       ),
 
     string_literal_content: (_) =>
@@ -148,7 +159,7 @@ module.exports = grammar({
         ),
       ),
     //----------------------
-    event_name: ($) => prec(10, $.identifier),
+    event_name: ($) => prec(10, $._idt),
     event_body: ($) => $.code_block,
     end_of_event: ($) => "end event",
     event_parameters: ($) => $.function_parameters,
@@ -178,7 +189,7 @@ module.exports = grammar({
     //     $.function_parameters,
     //     ";",
     //   ),
-    function_name: ($) => prec(10, $.identifier),
+    function_name: ($) => prec(10, $._idt),
     function_body: ($) => $.code_block,
     end_of_function: ($) => choice("end function", "end subroutine"),
 
@@ -217,7 +228,7 @@ module.exports = grammar({
 
     // expression: ($) =>
     //   choice(
-    //     $.identifier,
+    //     $._idt,
     //     $.unary_expression,
     //     // $.binary_expression,
     //     // $.assignment_expression,
@@ -243,15 +254,15 @@ module.exports = grammar({
           field("right", $.expression),
         ),
       ),
-    lvalue_expression: ($) => $.identifier,
+    lvalue_expression: ($) => $._idt,
 
     operator: ($) => choice("+", "-", "*", "/", "<>", ">=", "<=", "<", ">"),
 
     newline: ($) => /[\n\r]/,
     //-----------------------
-    assignment: ($) => seq($.identifier, "=", $.expression, $.newline),
+    assignment: ($) => seq($._idt, "=", $.expression, $.newline),
 
-    object_name: ($) => $.identifier,
+    object_name: ($) => $._idt,
 
     object_method_call: ($) =>
       seq($.object_name, ".", choice($.object_method_call, $.function_call)),
@@ -287,12 +298,11 @@ module.exports = grammar({
 
     parenthesized_expression: ($) => seq("(", $.expression, ")"),
 
-    // identifier: (_) => /[a-zA-Z0-9_]+/,
-    identifier: ($) => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    // _idt: (_) => /[a-zA-Z0-9_]+/,
+    _idt: ($) => /[a-zA-Z_][a-zA-Z0-9_]*/,
     number: ($) => /\d+/,
 
-    function_call: ($) =>
-      seq($.function_name, $.function_call_parameters, $.newline),
+    function_call: ($) => seq($.function_name, $.function_call_parameters),
     function_call_parameters: ($) =>
       seq("(", optional(repeat1(seq($.expression, optional(",")))), ")"),
   },
