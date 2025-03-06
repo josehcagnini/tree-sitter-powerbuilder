@@ -13,16 +13,18 @@ module.exports = grammar({
   rules: {
     // Top-level structure
     source_file: ($) =>
-      seq(
-        seq("HA$PBExportHeader$", $.class_name, ".", $.class_type),
-        $.forward_types,
-        $.global_class_properties,
-        optional($.global_class_dummy),
-        $.class_variables,
-        $.forward_prototypes,
-        choice(
-          optional($.event_implementations),
-          optional($.function_implementations),
+      repeat1(
+        seq(
+          seq("HA$PBExportHeader$", $.class_name, ".", $.class_type),
+          $.forward_types,
+          $.global_class_properties,
+          optional($.global_class_dummy),
+          $.class_variables,
+          $.forward_prototypes,
+          choice(
+            optional($.event_implementations),
+            optional($.function_implementations),
+          ),
         ),
       ),
 
@@ -37,7 +39,7 @@ module.exports = grammar({
         "from",
         $.class_name,
         $.newline,
-        $.type_variables,
+        optional($.type_variables),
         "end type",
       ),
 
@@ -68,18 +70,19 @@ module.exports = grammar({
       seq("type variables", $.type_variables, "end variables"),
     type_variables: ($) =>
       repeat1(choice($.class_variable, $.event_prototype_protptype)),
-    class_variable: ($) =>
-      seq(
-        $.type,
-        seq($.local_variable, optional("[]"), optional(seq("=", $.value))),
-      ),
+    class_variable: ($) => $.local_declaration,
+    // class_variable: ($) =>
+    //   seq(
+    //     $.type,
+    //     seq($.local_variable, optional("[]"), optional(seq("=", $.value))),
+    //   ),
     variable_list: ($) =>
       seq(
         commaSep1(
           seq(
             $.local_variable,
             optional("[]"),
-            optional(seq("=", $.expression)),
+            optional(seq($.opearor_assign, $.expression)),
           ),
         ),
       ),
@@ -122,40 +125,154 @@ module.exports = grammar({
     event_prototype_protptypes: ($) => repeat1($.event_prototype_protptype),
     event_prototype_protptype: ($) => seq($.event_prototype, $.newline),
 
+    event_prototype: ($) =>
+      seq(
+        "event",
+        optional(seq("type", $.type)),
+        $.event_name,
+        optional($.event_parameters),
+        optional($.event_builtin_type),
+      ),
+
+    event_builtin_type: ($) => $._idt,
+
     event_implementations: ($) => repeat1($.event_implementation),
     event_implementation: ($) =>
-      seq($.event_prototype, ";", $.event_body, $.end_of_event),
-    event_prototype: ($) => seq("event", $.event_name, $.event_parameters),
+      seq($.event_prototype, ";", optional($.event_body), $.end_of_event),
 
     event_name: ($) => prec(10, $._idt),
     event_parameters: ($) => $.function_parameters,
     event_body: ($) => $.code_block,
-    end_of_event: ($) => prec(20, seq("end event", $.newline)),
+    end_of_event: ($) => prec(20, seq(caseInsensitive("end event"), $.newline)),
 
     sql_block: ($) =>
       prec(
         20,
         seq(
-          choice("SELECT", "UPDATE", "DELETE", "INSERT"),
-          optional($.sql_into),
-          $.sql_statments,
+          choice(
+            $.sql_start_keywords,
+            // $.select_keyword,
+            // $.update_keyword,
+            // $.delete_keyword,
+            // $.insert_keyword,
+          ),
+          optional(
+            repeat1(
+              seq(
+                $.sql_keywords,
+                optional($.sql_into_params),
+                optional($.sql_statments),
+              ),
+            ),
+          ),
+
           $.end_of_sql,
         ),
       ),
 
-    sql_into: ($) =>
-      prec.right(
-        seq("INTO", repeat(seq(":", $.local_variable, optional(",")))),
+    sql_start_keywords: ($) =>
+      choice(
+        caseInsensitive("DECLARE"),
+        caseInsensitive("DROP"),
+        caseInsensitive("EXECUTE"),
+        caseInsensitive("SELECT"),
+        caseInsensitive("SELECTBLOB"),
+        caseInsensitive("DELETE"),
+        caseInsensitive("UPDATE"),
+        caseInsensitive("COMMIT"),
+        caseInsensitive("ROLLBACK"),
+        caseInsensitive("INSERT"),
       ),
+
+    sql_keywords: ($) =>
+      choice(
+        caseInsensitive("DECLARE"),
+        caseInsensitive("ADD"),
+        caseInsensitive("DROP"),
+        caseInsensitive("GO"),
+        caseInsensitive("EXECUTE"),
+        caseInsensitive("IMMEDIATE"),
+        caseInsensitive("SELECT"),
+        caseInsensitive("SELECTBLOB"),
+        caseInsensitive("INTO"),
+        caseInsensitive("WHERE"),
+        caseInsensitive("GROUP"),
+        caseInsensitive("BY"),
+        caseInsensitive("HAVING"),
+        caseInsensitive("WITH"),
+        caseInsensitive("ORDER"),
+        caseInsensitive("FROM"),
+        caseInsensitive("AS"),
+        caseInsensitive("DELETE"),
+        caseInsensitive("UPDATE"),
+        caseInsensitive("COMMIT"),
+        caseInsensitive("ROLLBACK"),
+        caseInsensitive("INSERT"),
+        caseInsensitive("SET"),
+        caseInsensitive("CREATE"),
+        caseInsensitive("TABLE"),
+        caseInsensitive("INDEX"),
+        caseInsensitive("ALTER"),
+        caseInsensitive("VIEW"),
+        caseInsensitive("FUNCTION"),
+        caseInsensitive("CREATE OR REPLACE"),
+        caseInsensitive("COLUMN"),
+        caseInsensitive("TRIGGER"),
+      ),
+    // Add explicit tokenized SQL keywords
+    select_keyword: ($) => $.sql_keywords,
+    // update_keyword: ($) => prec.right($.sql_keywords),
+    // delete_keyword: ($) => prec.right($.sql_keywords),
+    // insert_keyword: ($) => prec.right($.sql_keywords),
+
+    // Keep existing SQL rules but add explicit tokenization
+    sql_into_params: ($) =>
+      // field("into_keyword", token(/(INTO|into|Into)/)),
+      repeat1(seq(":", $.local_variable, optional(","))),
+
     sql_statments: ($) =>
       repeat1(
         choice(
           $._idt,
           $.operator_compare,
-          seq(optional(":"), $.local_variable),
+          ".",
+          // seq(optional(":"), $.local_variable),
         ),
       ),
-    end_of_sql: ($) => seq("USING", $.local_variable, ";"),
+    end_of_sql: ($) =>
+      seq(
+        field("using_keyword", token(/(USING|using|Using)/)),
+        $.local_variable,
+        ";",
+      ),
+
+    choose_block_start: ($) => caseInsensitive("choose case"),
+    choose_case: ($) => caseInsensitive("case"),
+
+    choose_case_else: ($) =>
+      prec(20, seq(caseInsensitive("case else"), $.newline)),
+    choose_end: ($) => seq(caseInsensitive("end choose"), $.newline),
+
+    choose_block: ($) =>
+      seq(
+        $.choose_block_start,
+        $.expression,
+        $.newline,
+        repeat1(
+          seq(
+            choice(
+              seq(
+                $.choose_case,
+                repeat1(seq($.expression, optional(","), optional("&"))),
+                $.newline,
+              ),
+              $.choose_case_else,
+            ),
+            optional($.code_block),
+          ),
+        ),
+        $.choose_end,
+      ),
 
     // Code blocks and control structures
     code_block: ($) =>
@@ -172,24 +289,40 @@ module.exports = grammar({
               $.pb_constructions,
               $.object_method_call,
               $.sql_block,
+              $.choose_block,
             ),
           ),
         ),
       ),
 
+    if_keyword: ($) => caseInsensitive("IF"),
+    elseif_keyword: ($) => caseInsensitive("ELSEIF"),
+    then_keyword: ($) => caseInsensitive("THEN"),
+    else_keyword: ($) => caseInsensitive("ELSE"),
+    endif_keyword: ($) => caseInsensitive("END IF"),
+
     pb_constructions: ($) => choice($.if_statment),
     if_statment: ($) =>
-      seq(
-        field("keyword", choice("IF", "ELSEIF")),
-        $.expression,
-        field("keyword", "THEN"),
-        optional($.comment),
-        $.newline,
-        optional($.code_block),
-        optional(seq("ELSE", optional($.comment))),
-        optional($.code_block),
-        field("keyword", "END IF"),
-        $.newline,
+      choice(
+        seq(
+          choice($.if_keyword, $.elseif_keyword),
+          $.expression,
+          $.then_keyword,
+          optional($.comment),
+          $.newline,
+          optional($.code_block),
+          optional(seq($.else_keyword, optional($.comment), $.newline)),
+          optional($.code_block),
+          $.endif_keyword,
+          $.newline,
+        ),
+        seq(
+          $.if_keyword,
+          $.expression,
+          $.then_keyword,
+          $.code_block,
+          $.newline,
+        ),
       ),
 
     // Expressions
@@ -206,18 +339,33 @@ module.exports = grammar({
     unary_expression: ($) =>
       prec.left(
         17,
-        seq(field("operator", "NOT"), field("argument", $.expression)),
+        seq(
+          field("operator", caseInsensitive("NOT")),
+          field("argument", $.expression),
+        ),
       ),
 
     binary_expression: ($) =>
       prec.left(choice(seq($.expression, $.operator_compare, $.expression))),
     parenthesized_expression: ($) => seq("(", $.expression, ")"),
     assignment: ($) =>
-      seq($.object_method_call, "=", repeat1($.expression), $.newline),
+      seq(
+        $.object_method_call,
+        $.operator_assignment,
+        repeat1($.expression),
+        $.newline,
+      ),
+    operator_assignment: ($) => "=",
 
     // Literals and values
     value: ($) =>
-      choice($.string_literal, $.integer, $.decimal, $.boolean_literal),
+      choice(
+        $.string_literal,
+        $.integer,
+        $.decimal,
+        $.boolean_literal,
+        // $.local_variable,
+      ),
     string_literal: ($) =>
       choice(
         seq(
@@ -233,25 +381,50 @@ module.exports = grammar({
       ),
     integer: ($) => /\d+/,
     decimal: ($) => /\d+\.\d+/,
-    boolean_literal: ($) => choice("TRUE", "true", "FALSE", "false", "null"),
+    boolean_literal: ($) =>
+      choice(caseInsensitive("TRUE"), caseInsensitive("FALSE")),
+    opearor_assign: ($) => "=",
     operator_compare: ($) =>
-      choice("+", "-", "*", "/", ">", "<", "=", "<>", ">=", "<=", "OR", "AND"),
-
+      choice(
+        "+",
+        "-",
+        "*",
+        "/",
+        ">",
+        "<",
+        "=",
+        "<>",
+        ">=",
+        "<=",
+        $.operator_logical,
+      ),
+    operator_logical: ($) =>
+      choice(caseInsensitive("AND"), caseInsensitive("OR")),
     // Common components
-    visibility: ($) => choice("public", "private", "protected"),
+    visibility: ($) =>
+      choice(
+        caseInsensitive("public"),
+        caseInsensitive("private"),
+        caseInsensitive("protected"),
+      ),
     type: ($) => $._idt,
     local_variable: ($) =>
       prec.left(3, seq($._idt, optional($.array_construction))),
-    builtin_const: ($) => prec(4, seq($._idt, "!")),
+    builtin_const: ($) =>
+      prec(4, choice(seq($._idt, "!"), caseInsensitive("null"))),
     object_method_call: ($) =>
       seq(
-        $.object_name,
+        field("left", $.object_name),
         ".",
-        choice(
-          $.object_name,
-          $.object_method_call,
-          $.function_call,
-          $.array_call,
+        optional(caseInsensitive("event")),
+        field(
+          "right",
+          choice(
+            $.object_name,
+            $.object_method_call,
+            $.function_call,
+            $.array_call,
+          ),
         ),
       ),
     function_call: ($) => seq($.function_name, $.function_call_parameters),
@@ -270,13 +443,13 @@ module.exports = grammar({
       ),
     string_literal_content_single: (_) =>
       choice(
-        token.immediate(prec(1, /[^'\\\n]+/)),
-        prec(2, token.immediate(seq("\\", /[^abefnrtv'\"\\\?0]/))),
+        token.immediate(prec(1, /[^'\n]+/)),
+        // prec(2, token.immediate(seq("\\", /[^abefnrtv'\"\\\?0]/))),
       ),
     string_literal_content: (_) =>
       choice(
-        token.immediate(prec(1, /[^"\\\n]+/)),
-        prec(2, token.immediate(seq("\\", /[^abefnrtv'\"\\\?0]/))),
+        token.immediate(prec(1, /[^"\n]+/)),
+        // prec(2, token.immediate(seq("\\", /[^abefnrtv'\"\\\?0]/))),
       ),
     escape_sequence: (_) =>
       token(
@@ -311,4 +484,13 @@ module.exports = grammar({
  */
 function commaSep1(rule) {
   return seq(rule, repeat(field("comma", seq(",", rule))));
+}
+
+function caseInsensitive(keyword) {
+  return new RegExp(
+    keyword
+      .split("")
+      .map((char) => `[${char.toLowerCase()}${char.toUpperCase()}]`)
+      .join(""),
+  );
 }

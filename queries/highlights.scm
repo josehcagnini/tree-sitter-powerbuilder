@@ -13,17 +13,22 @@
 ] @punctuation.delimiter
 
 
-[
- "IF"
- "THEN"
- "END IF"
- "ELSE"
- "ELSEIF"
- ] @keyword
+;; [
+;;  "IF"
+;;  "THEN"
+;;  "END IF"
+;;  "ELSE"
+;;  "ELSEIF"
+;;  ] @keyword
 
 
+((operator_assignment) @operator)
 ((operator_compare) @operator)
+((opearor_assign) @operator)
+((operator_logical) @operator.logical)
+
 ((builtin_const) @keyword)
+
 
 ((class_name) @class.name)
 
@@ -45,9 +50,48 @@
 (function_parameters 
           (function_parameter 
             (type) @keyword.type 
-            (local_variable) @variable.member ))
-((local_variable) @variable.instance)
-((object_name) @variable.member)
+            (local_variable) @variable.local ))
+
+((local_variable) @variable.local)
+
+((object_name) @variable.member_left)
+
+(object_method_call 
+  left: (object_name)  @variable.member_left
+  right: (object_name) @varibale.member)
+
+(object_method_call 
+  right: (array_call) @varibale.array_call)
+
+
 (function_prototype
   (function_name) @function.declaration)
   ((event_name) @function.declaration)
+
+
+
+((sql_keywords) @sql.keyword)
+((sql_start_keywords) @sql.keyword)
+((end_of_sql) @sql.keyword )
+(sql_into_params 
+ (local_variable) @sql.parameter)
+
+;; (select_keyword) @keyword
+;; (update_keyword) @keyword
+;; (delete_keyword) @keyword
+;; (insert_keyword) @keyword
+;; (sql_into (token) @keyword)
+;; (end_of_sql (token) @keyword)
+
+; Control flow keywords
+(if_keyword) @keyword.control.conditional
+(elseif_keyword) @keyword.control.conditional
+(then_keyword) @keyword.control.conditional
+(else_keyword) @keyword.control.conditional
+(endif_keyword) @keyword.control.conditional
+
+
+(choose_block_start) @keyword
+(choose_case) @keyword
+(choose_case_else) @keyword
+(choose_end) @keyword
