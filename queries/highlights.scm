@@ -24,7 +24,6 @@
 
 ((operator_assignment) @operator)
 ((operator_compare) @operator)
-((opearor_assign) @operator)
 ((operator_logical) @operator.logical)
 
 ((builtin_const) @keyword)

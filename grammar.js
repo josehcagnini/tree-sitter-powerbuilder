@@ -7,8 +7,28 @@
 /// <reference types="tree-sitter-cli/dsl" />
 // @ts-check
 
+const PREC = {
+  END_EVENT: 21,
+  LOCAL_DECLARATION: 0,
+  SQL_BLOCK: 20,
+  CHOOSE_CASE_ELSE: 20,
+  UNARY: 17,
+  FUNCTION_NAME: 10,
+  EVENT_NAME: 10,
+  CODE_BLOCK: 2,
+  CODE_BLOCK_CHOICE: 1,
+  LOCAL_VAR: 3,
+  RETURN: 40,
+  BUILTIN_CONST: 9,
+  STRING_LITERAL: 1,
+  STRING_ESCAPE: 2,
+  ASSIGNMENT: 3,
+};
+
 module.exports = grammar({
   name: "powerbuilder",
+
+  // conflicts: ($) => [[$.assignment, $.variable_list]],
 
   rules: {
     // Top-level structure
@@ -82,7 +102,7 @@ module.exports = grammar({
           seq(
             $.local_variable,
             optional("[]"),
-            optional(seq($.opearor_assign, $.expression)),
+            optional(seq($.operator_assignment, $.expression)),
           ),
         ),
       ),
@@ -117,7 +137,7 @@ module.exports = grammar({
         optional($.function_body),
         $.end_of_function,
       ),
-    function_name: ($) => prec(10, $._idt),
+    function_name: ($) => prec(PREC.FUNCTION_NAME, $._idt),
     function_body: ($) => $.code_block,
     end_of_function: ($) => choice("end function", "end subroutine"),
 
@@ -140,14 +160,15 @@ module.exports = grammar({
     event_implementation: ($) =>
       seq($.event_prototype, ";", optional($.event_body), $.end_of_event),
 
-    event_name: ($) => prec(10, $._idt),
+    event_name: ($) => prec(PREC.EVENT_NAME, $._idt),
     event_parameters: ($) => $.function_parameters,
     event_body: ($) => $.code_block,
-    end_of_event: ($) => prec(20, seq(caseInsensitive("end event"), $.newline)),
+    end_of_event: ($) =>
+      prec(PREC.END_EVENT, seq(token.immediate("end event"), $.newline)),
 
     sql_block: ($) =>
       prec(
-        20,
+        PREC.SQL_BLOCK,
         seq(
           choice(
             $.sql_start_keywords,
@@ -250,7 +271,7 @@ module.exports = grammar({
     choose_case: ($) => caseInsensitive("case"),
 
     choose_case_else: ($) =>
-      prec(20, seq(caseInsensitive("case else"), $.newline)),
+      prec(PREC.CHOOSE_CASE_ELSE, seq(caseInsensitive("case else"), $.newline)),
     choose_end: ($) => seq(caseInsensitive("end choose"), $.newline),
 
     choose_block: ($) =>
@@ -279,21 +300,26 @@ module.exports = grammar({
       prec.right(
         repeat1(
           prec(
-            1,
+            PREC.CODE_BLOCK_CHOICE,
             choice(
               $.return_statement,
               $.local_declaration,
               $.comment,
-              prec(2, $.assignment),
+              prec(PREC.ASSIGNMENT, $.assignment),
               $.function_call,
-              $.pb_constructions,
+              $.if_statment,
               $.object_method_call,
               $.sql_block,
               $.choose_block,
+              $.goto_def,
+              $.goto_use,
             ),
           ),
         ),
       ),
+
+    goto_def: ($) => seq($._idt, ":"),
+    goto_use: ($) => seq(token(caseInsensitive("goto")), $._idt, $.newline),
 
     if_keyword: ($) => caseInsensitive("IF"),
     elseif_keyword: ($) => caseInsensitive("ELSEIF"),
@@ -301,7 +327,7 @@ module.exports = grammar({
     else_keyword: ($) => caseInsensitive("ELSE"),
     endif_keyword: ($) => caseInsensitive("END IF"),
 
-    pb_constructions: ($) => choice($.if_statment),
+    // pb_constructions: ($) => choice($.if_statment),
     if_statment: ($) =>
       choice(
         seq(
@@ -325,6 +351,14 @@ module.exports = grammar({
         ),
       ),
 
+    // repeat_statement: ($) =>
+    //   seq(
+    //     alias("repeat", $.repeat_start),
+    //     optional($._block),
+    //     alias("until", $.repeat_until),
+    //     $._expression,
+    //   ),
+
     // Expressions
     expression: ($) =>
       choice(
@@ -338,7 +372,7 @@ module.exports = grammar({
       ),
     unary_expression: ($) =>
       prec.left(
-        17,
+        PREC.UNARY,
         seq(
           field("operator", caseInsensitive("NOT")),
           field("argument", $.expression),
@@ -350,7 +384,8 @@ module.exports = grammar({
     parenthesized_expression: ($) => seq("(", $.expression, ")"),
     assignment: ($) =>
       seq(
-        $.object_method_call,
+        // $.object_method_call,
+        $.local_variable,
         $.operator_assignment,
         repeat1($.expression),
         $.newline,
@@ -383,7 +418,6 @@ module.exports = grammar({
     decimal: ($) => /\d+\.\d+/,
     boolean_literal: ($) =>
       choice(caseInsensitive("TRUE"), caseInsensitive("FALSE")),
-    opearor_assign: ($) => "=",
     operator_compare: ($) =>
       choice(
         "+",
@@ -409,9 +443,12 @@ module.exports = grammar({
       ),
     type: ($) => $._idt,
     local_variable: ($) =>
-      prec.left(3, seq($._idt, optional($.array_construction))),
+      prec.left(PREC.LOCAL_VAR, seq($._idt, optional($.array_construction))),
     builtin_const: ($) =>
-      prec(4, choice(seq($._idt, "!"), caseInsensitive("null"))),
+      prec(
+        PREC.BUILTIN_CONST,
+        choice(seq($._idt, "!"), caseInsensitive("null")),
+      ),
     object_method_call: ($) =>
       seq(
         field("left", $.object_name),
@@ -442,15 +479,9 @@ module.exports = grammar({
         ),
       ),
     string_literal_content_single: (_) =>
-      choice(
-        token.immediate(prec(1, /[^'\n]+/)),
-        // prec(2, token.immediate(seq("\\", /[^abefnrtv'\"\\\?0]/))),
-      ),
+      choice(token.immediate(prec(PREC.STRING_LITERAL, /[^'\n]+/))),
     string_literal_content: (_) =>
-      choice(
-        token.immediate(prec(1, /[^"\n]+/)),
-        // prec(2, token.immediate(seq("\\", /[^abefnrtv'\"\\\?0]/))),
-      ),
+      choice(token.immediate(prec(PREC.STRING_LITERAL, /[^"\n]+/))),
     escape_sequence: (_) =>
       token(
         choice(
@@ -468,8 +499,9 @@ module.exports = grammar({
     object_name: ($) => $._idt,
     array_call: ($) => seq($._idt, $.array_construction),
     return_statement: ($) =>
-      prec.right(3, seq("return", optional($.expression), $.newline)),
-    local_declaration: ($) => seq(optional($.type), $.variable_list, $.newline),
+      prec.right(PREC.RETURN, seq("return", optional($.expression), $.newline)),
+    local_declaration: ($) =>
+      prec(PREC.LOCAL_DECLARATION, seq($.type, $.variable_list, $.newline)),
   },
 });
 

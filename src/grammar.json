@@ -301,7 +301,7 @@
                       "members": [
                         {
                           "type": "SYMBOL",
-                          "name": "opearor_assign"
+                          "name": "operator_assignment"
                         },
                         {
                           "type": "SYMBOL",
@@ -355,7 +355,7 @@
                               "members": [
                                 {
                                   "type": "SYMBOL",
-                                  "name": "opearor_assign"
+                                  "name": "operator_assignment"
                                 },
                                 {
                                   "type": "SYMBOL",
@@ -721,13 +721,16 @@
     },
     "end_of_event": {
       "type": "PREC",
-      "value": 20,
+      "value": 21,
       "content": {
         "type": "SEQ",
         "members": [
           {
-            "type": "PATTERN",
-            "value": "[eE][nN][dD][  ][eE][vV][eE][nN][tT]"
+            "type": "IMMEDIATE_TOKEN",
+            "content": {
+              "type": "STRING",
+              "value": "end event"
+            }
           },
           {
             "type": "SYMBOL",
@@ -1218,7 +1221,7 @@
               },
               {
                 "type": "PREC",
-                "value": 2,
+                "value": 3,
                 "content": {
                   "type": "SYMBOL",
                   "name": "assignment"
@@ -1230,7 +1233,7 @@
               },
               {
                 "type": "SYMBOL",
-                "name": "pb_constructions"
+                "name": "if_statment"
               },
               {
                 "type": "SYMBOL",
@@ -1243,11 +1246,52 @@
               {
                 "type": "SYMBOL",
                 "name": "choose_block"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "goto_def"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "goto_use"
               }
             ]
           }
         }
       }
+    },
+    "goto_def": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "_idt"
+        },
+        {
+          "type": "STRING",
+          "value": ":"
+        }
+      ]
+    },
+    "goto_use": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "TOKEN",
+          "content": {
+            "type": "PATTERN",
+            "value": "[gG][oO][tT][oO]"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_idt"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "newline"
+        }
+      ]
     },
     "if_keyword": {
       "type": "PATTERN",
@@ -1268,15 +1312,6 @@
     "endif_keyword": {
       "type": "PATTERN",
       "value": "[eE][nN][dD][  ][iI][fF]"
-    },
-    "pb_constructions": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "if_statment"
-        }
-      ]
     },
     "if_statment": {
       "type": "CHOICE",
@@ -1521,7 +1556,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "object_method_call"
+          "name": "local_variable"
         },
         {
           "type": "SYMBOL",
@@ -1649,10 +1684,6 @@
         }
       ]
     },
-    "opearor_assign": {
-      "type": "STRING",
-      "value": "="
-    },
     "operator_compare": {
       "type": "CHOICE",
       "members": [
@@ -1763,7 +1794,7 @@
     },
     "builtin_const": {
       "type": "PREC",
-      "value": 4,
+      "value": 9,
       "content": {
         "type": "CHOICE",
         "members": [
@@ -2058,7 +2089,7 @@
     },
     "return_statement": {
       "type": "PREC_RIGHT",
-      "value": 3,
+      "value": 40,
       "content": {
         "type": "SEQ",
         "members": [
@@ -2086,29 +2117,25 @@
       }
     },
     "local_declaration": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "type"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
-          "type": "SYMBOL",
-          "name": "variable_list"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "newline"
-        }
-      ]
+      "type": "PREC",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "type"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "variable_list"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "newline"
+          }
+        ]
+      }
     }
   },
   "extras": [

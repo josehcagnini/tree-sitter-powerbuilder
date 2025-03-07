@@ -42,11 +42,11 @@
           "named": true
         },
         {
-          "type": "newline",
+          "type": "local_variable",
           "named": true
         },
         {
-          "type": "object_method_call",
+          "type": "newline",
           "named": true
         },
         {
@@ -234,15 +234,23 @@
           "named": true
         },
         {
+          "type": "goto_def",
+          "named": true
+        },
+        {
+          "type": "goto_use",
+          "named": true
+        },
+        {
+          "type": "if_statment",
+          "named": true
+        },
+        {
           "type": "local_declaration",
           "named": true
         },
         {
           "type": "object_method_call",
-          "named": true
-        },
-        {
-          "type": "pb_constructions",
           "named": true
         },
         {
@@ -726,6 +734,26 @@
     }
   },
   {
+    "type": "goto_def",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "goto_use",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "if_statment",
     "named": true,
     "fields": {},
@@ -854,11 +882,6 @@
     "fields": {}
   },
   {
-    "type": "opearor_assign",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "operator_assignment",
     "named": true,
     "fields": {}
@@ -893,21 +916,6 @@
       "types": [
         {
           "type": "expression",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "pb_constructions",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "if_statment",
           "named": true
         }
       ]
@@ -1160,7 +1168,7 @@
             "named": true
           },
           {
-            "type": "opearor_assign",
+            "type": "operator_assignment",
             "named": true
           }
         ]
@@ -1179,7 +1187,7 @@
           "named": true
         },
         {
-          "type": "opearor_assign",
+          "type": "operator_assignment",
           "named": true
         }
       ]
@@ -1309,6 +1317,10 @@
   {
     "type": "elseif_keyword",
     "named": true
+  },
+  {
+    "type": "end event",
+    "named": false
   },
   {
     "type": "end forward",
