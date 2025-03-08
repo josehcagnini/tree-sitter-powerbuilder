@@ -27,7 +27,7 @@
 ((operator_logical) @operator.logical)
 
 ((builtin_const) @keyword)
-
+((ERROR) @ts.error)
 
 ((class_name) @class.name)
 

@@ -33,19 +33,33 @@ module.exports = grammar({
   rules: {
     // Top-level structure
     source_file: ($) =>
-      repeat1(
-        seq(
-          seq("HA$PBExportHeader$", $.class_name, ".", $.class_type),
-          $.forward_types,
-          $.global_class_properties,
-          optional($.global_class_dummy),
-          $.class_variables,
-          $.forward_prototypes,
-          choice(
-            optional($.event_implementations),
-            optional($.function_implementations),
-          ),
+      seq(
+        $.pb_header_calss_name,
+        optional($.pb_header_comment),
+        $.forward_types,
+        optional(repeat1($.structur_prototypes)),
+        $.global_class_properties,
+        optional($.global_class_dummy),
+        $.class_variables,
+        $.forward_prototypes,
+        choice(
+          optional($.event_implementations),
+          optional($.function_implementations),
         ),
+      ),
+
+    pb_header_calss_name: ($) =>
+      seq("HA$PBExportHeader$", $.class_name, ".", $.class_type),
+    pb_header_comment: ($) => seq("$PBExportComments$", /[^\n]+/, $.newline),
+
+    structur_prototypes: ($) =>
+      seq(
+        "type",
+        $.class_name,
+        "from",
+        "structure",
+        repeat1($.local_declaration),
+        "end type",
       ),
 
     // optional($.event_prototype_protptypes),
@@ -331,14 +345,34 @@ module.exports = grammar({
     if_statment: ($) =>
       choice(
         seq(
-          choice($.if_keyword, $.elseif_keyword),
+          choice($.if_keyword),
           $.expression,
           $.then_keyword,
           optional($.comment),
           $.newline,
-          optional($.code_block),
-          optional(seq($.else_keyword, optional($.comment), $.newline)),
-          optional($.code_block),
+          optional(
+            repeat1(
+              seq(
+                $.code_block,
+                optional(
+                  choice(
+                    seq(
+                      $.elseif_keyword,
+                      $.expression,
+                      $.then_keyword,
+                      optional($.comment),
+                      $.newline,
+                      optional($.code_block),
+                    ),
+                    seq(
+                      seq($.else_keyword, optional($.comment), $.newline),
+                      optional($.code_block),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
           $.endif_keyword,
           $.newline,
         ),
@@ -415,7 +449,7 @@ module.exports = grammar({
         ),
       ),
     integer: ($) => /\d+/,
-    decimal: ($) => /\d+\.\d+/,
+    decimal: ($) => /\d*\.\d+/,
     boolean_literal: ($) =>
       choice(caseInsensitive("TRUE"), caseInsensitive("FALSE")),
     operator_compare: ($) =>
@@ -441,7 +475,26 @@ module.exports = grammar({
         caseInsensitive("private"),
         caseInsensitive("protected"),
       ),
-    type: ($) => $._idt,
+    type: ($) => choice($.builtin_type, $.idt_with_underscore, $._idt),
+
+    builtin_type: ($) =>
+      choice(
+        caseInsensitive("integer"),
+        caseInsensitive("string"),
+        caseInsensitive("boolean"),
+        caseInsensitive("decimal"),
+        caseInsensitive("date"),
+        caseInsensitive("datetime"),
+        caseInsensitive("time"),
+        caseInsensitive("blob"),
+        caseInsensitive("long"),
+        caseInsensitive("double"),
+        caseInsensitive("char"),
+        caseInsensitive("byte"),
+        caseInsensitive("any"),
+        caseInsensitive("treeviewitem"),
+      ),
+
     local_variable: ($) =>
       prec.left(PREC.LOCAL_VAR, seq($._idt, optional($.array_construction))),
     builtin_const: ($) =>
@@ -470,6 +523,7 @@ module.exports = grammar({
 
     // Low-level tokens
     _idt: ($) => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    idt_with_underscore: ($) => /[a-zA-Z]+[_]+[a-zA-Z0-9_]*/,
     newline: ($) => /[\n\r]/,
     comment: (_) =>
       token(
