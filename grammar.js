@@ -351,24 +351,27 @@ module.exports = grammar({
           optional($.comment),
           $.newline,
           optional(
-            repeat1(
-              seq(
-                $.code_block,
-                optional(
-                  choice(
-                    seq(
-                      $.elseif_keyword,
-                      $.expression,
-                      $.then_keyword,
-                      optional($.comment),
-                      $.newline,
-                      optional($.code_block),
-                    ),
-                    seq(
-                      seq($.else_keyword, optional($.comment), $.newline),
-                      optional($.code_block),
+            prec.right(
+              repeat1(
+                seq(
+                  optional($.code_block),
+                  optional(
+                    choice(
+                      seq(
+                        $.elseif_keyword,
+                        $.expression,
+                        $.then_keyword,
+                        optional($.comment),
+                        $.newline,
+                        optional($.code_block),
+                      ),
+                      seq(
+                        seq($.else_keyword, optional($.comment), $.newline),
+                        optional($.code_block),
+                      ),
                     ),
                   ),
+                  optional($.code_block),
                 ),
               ),
             ),
@@ -403,6 +406,7 @@ module.exports = grammar({
         $.builtin_const,
         $.function_call,
         $.object_method_call,
+        seq("&", $.newline),
       ),
     unary_expression: ($) =>
       prec.left(
@@ -424,7 +428,7 @@ module.exports = grammar({
         repeat1($.expression),
         $.newline,
       ),
-    operator_assignment: ($) => "=",
+    operator_assignment: ($) => choice("=", "+=", "-="),
 
     // Literals and values
     value: ($) =>
@@ -553,7 +557,10 @@ module.exports = grammar({
     object_name: ($) => $._idt,
     array_call: ($) => seq($._idt, $.array_construction),
     return_statement: ($) =>
-      prec.right(PREC.RETURN, seq("return", optional($.expression), $.newline)),
+      prec(
+        PREC.RETURN,
+        seq(caseInsensitive("return"), optional($.expression), $.newline),
+      ),
     local_declaration: ($) =>
       prec(PREC.LOCAL_DECLARATION, seq($.type, $.variable_list, $.newline)),
   },

@@ -2,6 +2,7 @@
 ;; https://github.com/catppuccin/nvim/blob/main/lua/catppuccin/groups/integrations/treesitter.lua
 ; Highlight class names
 
+((ERROR) @ts.error)
 [
   ";"
   "."
@@ -21,13 +22,25 @@
 ;;  "ELSEIF"
 ;;  ] @keyword
 
+[
+ "event"
+ "end event"
+ "function"
+ "end function"
+ "type"
+ "from"
+ "end type"
+ "type variables"
+ "end variables"
+ ] @keyword.directive
+
+((event_prototype) @event_prototype)
 
 ((operator_assignment) @operator)
 ((operator_compare) @operator)
 ((operator_logical) @operator.logical)
 
 ((builtin_const) @keyword)
-((ERROR) @ts.error)
 
 ((class_name) @class.name)
 

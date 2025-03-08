@@ -458,6 +458,10 @@
           "named": true
         },
         {
+          "type": "newline",
+          "named": true
+        },
+        {
           "type": "object_method_call",
           "named": true
         },
@@ -1311,11 +1315,19 @@
     "named": false
   },
   {
+    "type": "+=",
+    "named": false
+  },
+  {
     "type": ",",
     "named": false
   },
   {
     "type": "-",
+    "named": false
+  },
+  {
+    "type": "-=",
     "named": false
   },
   {
@@ -1476,10 +1488,6 @@
   },
   {
     "type": "ref",
-    "named": false
-  },
-  {
-    "type": "return",
     "named": false
   },
   {
