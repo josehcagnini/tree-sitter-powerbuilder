@@ -27,26 +27,48 @@ const PREC = {
 
 module.exports = grammar({
   name: "powerbuilder",
-
+  extras: ($) => [$.comment, /\s/, "&"],
   // conflicts: ($) => [[$.assignment, $.variable_list]],
-
+  // supertypes: ($) => [$.statement, $.expression, $.declaration, $.variable],
+  // supertypes: ($) => [$.return_statement],
   rules: {
     // Top-level structure
     source_file: ($) =>
-      seq(
-        $.pb_header_calss_name,
-        optional($.pb_header_comment),
-        $.forward_types,
-        optional(repeat1($.structur_prototypes)),
-        $.global_class_properties,
-        optional($.global_class_dummy),
-        $.class_variables,
-        $.forward_prototypes,
-        choice(
-          optional($.event_implementations),
-          optional($.function_implementations),
+      repeat1(
+        seq(
+          $.pb_header_calss_name,
+          optional($.pb_header_comment),
+          $.forward_types,
+          optional(repeat1($.structur_prototypes)),
+          $.global_class_properties,
+          optional($.global_class_dummy),
+          optional($.type_prototypes),
+          $.type_variables,
+          $.forward_prototypes,
+          choice(
+            optional($.event_implementations),
+            optional($.function_implementations),
+          ),
         ),
       ),
+
+    return_statement: ($) =>
+      prec(
+        PREC.RETURN,
+        seq(caseInsensitive("return"), optional($.expression), $.newline),
+      ),
+
+    return_expression: ($) =>
+      choice(
+        prec.left(
+          PREC.RETURN,
+          seq(token(caseInsensitive("return")), $.expression, $.newline),
+        ),
+        prec(41, seq(token(caseInsensitive("return")), $.newline)),
+      ),
+
+    type_prototypes: ($) =>
+      seq(token("type prototypes"), token("end prototypes")),
 
     pb_header_calss_name: ($) =>
       seq("HA$PBExportHeader$", $.class_name, ".", $.class_type),
@@ -73,7 +95,7 @@ module.exports = grammar({
         "from",
         $.class_name,
         $.newline,
-        optional($.type_variables),
+        optional($.type_variables_list),
         "end type",
       ),
 
@@ -100,11 +122,19 @@ module.exports = grammar({
       ),
 
     // Variables and properties
-    class_variables: ($) =>
-      seq("type variables", $.type_variables, "end variables"),
     type_variables: ($) =>
-      repeat1(choice($.class_variable, $.event_prototype_protptype)),
-    class_variable: ($) => $.local_declaration,
+      seq("type variables", $.type_variables_list, "end variables"),
+
+    type_variables_list: ($) =>
+      repeat1(
+        choice(
+          seq($.visibility, ":", $.newline),
+          $.class_variable,
+          $.event_prototype_protptype,
+        ),
+      ),
+
+    class_variable: ($) => seq(optional($.visibility), $.local_declaration),
     // class_variable: ($) =>
     //   seq(
     //     $.type,
@@ -131,11 +161,11 @@ module.exports = grammar({
     function_prototype: ($) =>
       seq(
         $.visibility,
-        choice("function", "subroutine"),
-        $.type,
+        choice(seq(token("function"), $.type), token("subroutine")),
         $.function_name,
         $.function_parameters,
       ),
+
     function_parameters: ($) =>
       seq("(", repeat(seq($.function_parameter, optional(","))), ")"),
 
@@ -217,6 +247,11 @@ module.exports = grammar({
         caseInsensitive("COMMIT"),
         caseInsensitive("ROLLBACK"),
         caseInsensitive("INSERT"),
+        // caseInsensitive("FETCH"),
+        // caseInsensitive("OPEN"),
+        // 	OPEN designatable_cur;
+        // 	FETCH designatable_cur INTO :ls_return_state_id;
+        // 	CLOSE designatable_cur;
       ),
 
     sql_keywords: ($) =>
@@ -298,7 +333,7 @@ module.exports = grammar({
             choice(
               seq(
                 $.choose_case,
-                repeat1(seq($.expression, optional(","), optional("&"))),
+                repeat1(seq($.expression, optional(","))),
                 $.newline,
               ),
               $.choose_case_else,
@@ -309,28 +344,26 @@ module.exports = grammar({
         $.choose_end,
       ),
 
-    // Code blocks and control structures
-    code_block: ($) =>
-      prec.right(
-        repeat1(
-          prec(
-            PREC.CODE_BLOCK_CHOICE,
-            choice(
-              $.return_statement,
-              $.local_declaration,
-              $.comment,
-              prec(PREC.ASSIGNMENT, $.assignment),
-              $.function_call,
-              $.if_statment,
-              $.object_method_call,
-              $.sql_block,
-              $.choose_block,
-              $.goto_def,
-              $.goto_use,
-            ),
-          ),
+    statement: ($) =>
+      prec(
+        PREC.CODE_BLOCK_CHOICE,
+        choice(
+          $.return_expression,
+          $.local_declaration,
+          $.comment,
+          prec(PREC.ASSIGNMENT, $.assignment),
+          $.function_call,
+          $.if_statment,
+          $.object_method_call,
+          $.sql_block,
+          $.choose_block,
+          $.goto_def,
+          $.goto_use,
         ),
       ),
+
+    // Code blocks and control structures
+    code_block: ($) => prec.right(repeat1($.statement)),
 
     goto_def: ($) => seq($._idt, ":"),
     goto_use: ($) => seq(token(caseInsensitive("goto")), $._idt, $.newline),
@@ -354,7 +387,7 @@ module.exports = grammar({
             prec.right(
               repeat1(
                 seq(
-                  optional($.code_block),
+                  $.code_block,
                   optional(
                     choice(
                       seq(
@@ -379,13 +412,7 @@ module.exports = grammar({
           $.endif_keyword,
           $.newline,
         ),
-        seq(
-          $.if_keyword,
-          $.expression,
-          $.then_keyword,
-          $.code_block,
-          $.newline,
-        ),
+        seq($.if_keyword, $.expression, $.then_keyword, $.statement, $.newline),
       ),
 
     // repeat_statement: ($) =>
@@ -526,6 +553,7 @@ module.exports = grammar({
       seq("(", optional(repeat1(seq($.expression, optional(",")))), ")"),
 
     // Low-level tokens
+    word: ($) => $._idt,
     _idt: ($) => /[a-zA-Z_][a-zA-Z0-9_]*/,
     idt_with_underscore: ($) => /[a-zA-Z]+[_]+[a-zA-Z0-9_]*/,
     newline: ($) => /[\n\r]/,
@@ -556,11 +584,7 @@ module.exports = grammar({
     array_construction: ($) => seq("[", $.expression, "]"),
     object_name: ($) => $._idt,
     array_call: ($) => seq($._idt, $.array_construction),
-    return_statement: ($) =>
-      prec(
-        PREC.RETURN,
-        seq(caseInsensitive("return"), optional($.expression), $.newline),
-      ),
+
     local_declaration: ($) =>
       prec(PREC.LOCAL_DECLARATION, seq($.type, $.variable_list, $.newline)),
   },

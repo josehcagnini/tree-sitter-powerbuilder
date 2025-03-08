@@ -57,7 +57,7 @@
 ((string_literal_content_single) @string)
 ((function_name) @function)
 ((visibility) @visibility)
-((return_statement) @keyword.return)
+((return_expression) @keyword.return)
 
 (function_parameters 
           (function_parameter 
