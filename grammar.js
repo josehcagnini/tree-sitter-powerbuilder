@@ -40,6 +40,7 @@ module.exports = grammar({
         optional($.pb_header_comment),
         optional($.forward_types),
         optional(repeat1($.structur_prototypes)),
+        optional(repeat1($.shared_variables)),
         optional($.global_type_block),
         optional($.global_class_dummy),
         optional($.type_prototypes),
@@ -56,7 +57,12 @@ module.exports = grammar({
           ),
         ),
       ),
-
+    shared_variables: ($) =>
+      seq(
+        token("shared variables"),
+        optional($.type_variables_and_events_list),
+        token("end variables"),
+      ),
     line_carry: ($) => seq(token("&"), $.newline),
 
     unary_expression: ($) =>
@@ -259,28 +265,37 @@ module.exports = grammar({
         $.event_name,
         optional($.event_parameters),
         optional($.event_builtin_type),
-        ";",
       ),
 
+    event_prototype_implementation: ($) =>
+      seq(
+        token("event"),
+        optional(seq(token("type"), $.type)),
+        $.event_name,
+        optional($.event_parameters),
+        optional($.event_builtin_type),
+        token(";"),
+      ),
     event_builtin_type: ($) => $._idt,
 
     // event_implementations: ($) => repeat1($.event_implementation),
     event_implementation: ($) =>
       seq(
-        $.event_prototype,
+        $.event_prototype_implementation,
         optional($.event_call_supper),
+        token(";"),
         optional($.event_body),
         $.end_of_event,
       ),
 
     //event clicked;call super::clicked;LONG		ll_row, ll_case_id
-    event_call_supper: ($) => seq(token("call super::"), $.event_name, ";"),
+    event_call_supper: ($) => seq(token("call super::"), $.event_name),
 
     event_name: ($) => prec(PREC.EVENT_NAME, $._idt),
     event_parameters: ($) => $.function_parameters,
     event_body: ($) => $.code_block,
     end_of_event: ($) =>
-      prec(PREC.END_EVENT, seq(token.immediate("end event"), $.newline)),
+      prec(PREC.END_EVENT, seq(token("end event"), $.newline)),
 
     sql_block: ($) =>
       prec(
@@ -378,6 +393,10 @@ module.exports = grammar({
           $._idt,
           $.operator_compare,
           ".",
+          // $.object_method_call,
+          "(",
+          ")",
+          ",",
           // seq(optional(":"), $.local_variable),
         ),
       ),
@@ -449,7 +468,7 @@ module.exports = grammar({
       seq(
         alias(token(caseInsensitive("for")), $.for_next),
         $.expression,
-        token(caseInsensitive("to")),
+        alias(token(caseInsensitive("to")), $.for_next),
         $.expression,
         $.newline,
         $.code_block,
@@ -547,19 +566,23 @@ module.exports = grammar({
       ),
     // Expressions
     expression: ($) =>
-      choice(
-        $.update_expression,
-        $.unary_expression,
-        $.binary_expression,
-        $.parenthesized_expression,
-        $.value,
-        $.local_variable,
-        $.builtin_const,
-        $.function_call,
-        $.object_method_call,
-        $.line_carry,
-        $.array_expression,
-        // seq("&", $.newline),
+      prec.left(
+        seq(
+          choice(
+            $.update_expression,
+            $.unary_expression,
+            $.binary_expression,
+            $.parenthesized_expression,
+            $.value,
+            $.local_variable,
+            $.builtin_const,
+            $.function_call,
+            $.object_method_call,
+            $.array_expression,
+            // seq("&", $.newline),
+          ),
+          optional($.line_carry),
+        ),
       ),
 
     binary_expression: ($) =>

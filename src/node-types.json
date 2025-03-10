@@ -202,16 +202,11 @@
       "required": true,
       "types": [
         {
-          "type": "class_name",
+          "type": "type_name",
           "named": true
         }
       ]
     }
-  },
-  {
-    "type": "class_name",
-    "named": true,
-    "fields": {}
   },
   {
     "type": "class_type",
@@ -390,7 +385,7 @@
           "named": true
         },
         {
-          "type": "event_prototype",
+          "type": "event_prototype_implementation",
           "named": true
         }
       ]
@@ -418,6 +413,33 @@
   },
   {
     "type": "event_prototype",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "event_builtin_type",
+          "named": true
+        },
+        {
+          "type": "event_name",
+          "named": true
+        },
+        {
+          "type": "event_parameters",
+          "named": true
+        },
+        {
+          "type": "type",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "event_prototype_implementation",
     "named": true,
     "fields": {},
     "children": {
@@ -482,7 +504,7 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
         {
@@ -587,7 +609,7 @@
         "required": true,
         "types": [
           {
-            "type": "class_name",
+            "type": "type_name",
             "named": true
           }
         ]
@@ -598,7 +620,7 @@
       "required": true,
       "types": [
         {
-          "type": "class_name",
+          "type": "type_name",
           "named": true
         }
       ]
@@ -613,7 +635,7 @@
         "required": true,
         "types": [
           {
-            "type": "class_name",
+            "type": "type_name",
             "named": true
           }
         ]
@@ -624,11 +646,11 @@
       "required": true,
       "types": [
         {
-          "type": "class_name",
+          "type": "newline",
           "named": true
         },
         {
-          "type": "newline",
+          "type": "type_name",
           "named": true
         },
         {
@@ -811,7 +833,7 @@
     }
   },
   {
-    "type": "global_class_properties",
+    "type": "global_type_block",
     "named": true,
     "fields": {
       "dummy": {
@@ -830,11 +852,11 @@
       "required": true,
       "types": [
         {
-          "type": "class_name",
+          "type": "newline",
           "named": true
         },
         {
-          "type": "newline",
+          "type": "type_name",
           "named": true
         },
         {
@@ -1060,11 +1082,11 @@
       "required": true,
       "types": [
         {
-          "type": "class_name",
+          "type": "class_type",
           "named": true
         },
         {
-          "type": "class_type",
+          "type": "type_name",
           "named": true
         }
       ]
@@ -1117,15 +1139,15 @@
       "required": true,
       "types": [
         {
-          "type": "class_name",
-          "named": true
-        },
-        {
           "type": "newline",
           "named": true
         },
         {
           "type": "pb_inner_event_name",
+          "named": true
+        },
+        {
+          "type": "type_name",
           "named": true
         }
       ]
@@ -1145,6 +1167,21 @@
         },
         {
           "type": "newline",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "shared_variables",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "type_variables_and_events_list",
           "named": true
         }
       ]
@@ -1184,7 +1221,7 @@
           "named": true
         },
         {
-          "type": "global_class_properties",
+          "type": "global_type_block",
           "named": true
         },
         {
@@ -1197,6 +1234,10 @@
         },
         {
           "type": "pb_inner_on_event",
+          "named": true
+        },
+        {
+          "type": "shared_variables",
           "named": true
         },
         {
@@ -1402,11 +1443,11 @@
       "required": true,
       "types": [
         {
-          "type": "class_name",
+          "type": "local_declaration",
           "named": true
         },
         {
-          "type": "local_declaration",
+          "type": "type_name",
           "named": true
         }
       ]
@@ -1430,6 +1471,11 @@
         }
       ]
     }
+  },
+  {
+    "type": "type_name",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "type_prototypes",
@@ -1840,6 +1886,10 @@
   },
   {
     "type": "ref",
+    "named": false
+  },
+  {
+    "type": "shared variables",
     "named": false
   },
   {

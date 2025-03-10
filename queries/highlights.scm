@@ -53,7 +53,7 @@
 
 ((builtin_const) @keyword)
 
-((class_name) @class.name)
+((type_name) @class.name)
 
 ;; (clas_name) @type)
 ((forward_types) @keyword.directive)
