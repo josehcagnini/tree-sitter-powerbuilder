@@ -40,7 +40,7 @@ module.exports = grammar({
         optional($.pb_header_comment),
         optional($.forward_types),
         optional(repeat1($.structur_prototypes)),
-        optional($.global_class_properties),
+        optional($.global_type_block),
         optional($.global_class_dummy),
         optional($.type_prototypes),
         optional($.type_variables),
@@ -76,7 +76,7 @@ module.exports = grammar({
     pb_inner_on_event_header: ($) =>
       seq(
         token(caseInsensitive("on")),
-        $.class_name,
+        $.type_name,
         ".",
         alias($._idt, $.pb_inner_event_name),
         $.newline,
@@ -111,14 +111,14 @@ module.exports = grammar({
       seq(token("type prototypes"), token("end prototypes")),
 
     pb_header_calss_name: ($) =>
-      seq(token("HA$PBExportHeader$"), $.class_name, ".", $.class_type),
+      seq(token("HA$PBExportHeader$"), $.type_name, ".", $.class_type),
     pb_header_comment: ($) =>
       seq(token("$PBExportComments$"), /[^\n]+/, $.newline),
 
     structur_prototypes: ($) =>
       seq(
         token("type"),
-        $.class_name,
+        $.type_name,
         token("from"),
         token("structure"),
         repeat1($.local_declaration),
@@ -127,14 +127,14 @@ module.exports = grammar({
 
     // optional($.event_prototype_protptypes),
     // Class structure
-    class_name: ($) => field("classname", $._idt),
+    type_name: ($) => field("classname", $._idt),
     class_type: ($) => $._idt,
-    global_class_properties: ($) =>
+    global_type_block: ($) =>
       seq(
         field("dummy", token("global type")),
-        $.class_name,
+        $.type_name,
         token("from"),
-        $.class_name,
+        $.type_name,
         $.newline,
         optional($.type_variables_and_events_list),
         token("end type"),
@@ -143,9 +143,9 @@ module.exports = grammar({
     class_inherit_from: ($) =>
       seq(
         token("global type"),
-        $.class_name,
+        $.type_name,
         token("from"),
-        $.class_name,
+        $.type_name,
         token("end type"),
       ),
 
@@ -160,22 +160,22 @@ module.exports = grammar({
     forward_type: ($) =>
       seq(
         "type",
-        field("InstanceControlName", $.class_name),
+        field("InstanceControlName", $.type_name),
         "from",
-        $.class_name,
+        $.type_name,
         "within",
-        $.class_name,
+        $.type_name,
         "end type",
       ),
 
     forward_type_implemetation: ($) =>
       seq(
         "type",
-        field("InstanceControlName", $.class_name),
+        field("InstanceControlName", $.type_name),
         "from",
-        $.class_name,
+        $.type_name,
         "within",
-        $.class_name,
+        $.type_name,
         $.newline,
         optional($.type_variables_and_events_list),
         "end type",
@@ -218,9 +218,9 @@ module.exports = grammar({
     // Function prototypes
     forward_prototypes: ($) =>
       seq(
-        "forward prototypes",
+        token("forward prototypes"),
         repeat(seq($.function_prototype, $.newline)),
-        "end prototypes",
+        token("end prototypes"),
       ),
     function_prototype: ($) =>
       seq(
