@@ -127,6 +127,10 @@
                   {
                     "type": "SYMBOL",
                     "name": "pb_inner_on_event"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "forward_type_implemetation"
                   }
                 ]
               }
@@ -611,6 +615,59 @@
         }
       ]
     },
+    "forward_type_implemetation": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "type"
+        },
+        {
+          "type": "FIELD",
+          "name": "InstanceControlName",
+          "content": {
+            "type": "SYMBOL",
+            "name": "class_name"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "from"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "class_name"
+        },
+        {
+          "type": "STRING",
+          "value": "within"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "class_name"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "newline"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "type_variables_list"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": "end type"
+        }
+      ]
+    },
     "type_variables": {
       "type": "SEQ",
       "members": [
@@ -1073,6 +1130,10 @@
               "type": "BLANK"
             }
           ]
+        },
+        {
+          "type": "STRING",
+          "value": ";"
         }
       ]
     },
@@ -1088,8 +1149,16 @@
           "name": "event_prototype"
         },
         {
-          "type": "STRING",
-          "value": ";"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "event_call_supper"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         },
         {
           "type": "CHOICE",
@@ -1106,6 +1175,26 @@
         {
           "type": "SYMBOL",
           "name": "end_of_event"
+        }
+      ]
+    },
+    "event_call_supper": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "TOKEN",
+          "content": {
+            "type": "STRING",
+            "value": "call super::"
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "event_name"
+        },
+        {
+          "type": "STRING",
+          "value": ";"
         }
       ]
     },

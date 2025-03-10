@@ -51,6 +51,7 @@ module.exports = grammar({
               $.event_implementation,
               $.function_implementation,
               $.pb_inner_on_event,
+              $.forward_type_implemetation,
             ),
           ),
         ),
@@ -160,6 +161,19 @@ module.exports = grammar({
         "end type",
       ),
 
+    forward_type_implemetation: ($) =>
+      seq(
+        "type",
+        field("InstanceControlName", $.class_name),
+        "from",
+        $.class_name,
+        "within",
+        $.class_name,
+        $.newline,
+        optional($.type_variables_list),
+        "end type",
+      ),
+
     // Variables and properties
     type_variables: ($) =>
       seq("type variables", optional($.type_variables_list), "end variables"),
@@ -234,13 +248,22 @@ module.exports = grammar({
         $.event_name,
         optional($.event_parameters),
         optional($.event_builtin_type),
+        ";",
       ),
 
     event_builtin_type: ($) => $._idt,
 
     // event_implementations: ($) => repeat1($.event_implementation),
     event_implementation: ($) =>
-      seq($.event_prototype, ";", optional($.event_body), $.end_of_event),
+      seq(
+        $.event_prototype,
+        optional($.event_call_supper),
+        optional($.event_body),
+        $.end_of_event,
+      ),
+
+    //event clicked;call super::clicked;LONG		ll_row, ll_case_id
+    event_call_supper: ($) => seq(token("call super::"), $.event_name, ";"),
 
     event_name: ($) => prec(PREC.EVENT_NAME, $._idt),
     event_parameters: ($) => $.function_parameters,
