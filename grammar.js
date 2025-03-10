@@ -28,7 +28,7 @@ const PREC = {
 
 module.exports = grammar({
   name: "powerbuilder",
-  extras: ($) => [$.comment, /\s/],
+  extras: ($) => [$.comment, /\s/, $.line_carry],
   // conflicts: ($) => [[$.assignment, $.variable_list]],
   // supertypes: ($) => [$.statement, $.expression, $.declaration, $.variable],
   // supertypes: ($) => [$.return_statement],
@@ -63,7 +63,7 @@ module.exports = grammar({
         optional($.type_variables_and_events_list),
         token("end variables"),
       ),
-    line_carry: ($) => seq(token("&"), $.newline),
+    line_carry: ($) => "&",
 
     unary_expression: ($) =>
       prec.left(
@@ -283,13 +283,14 @@ module.exports = grammar({
       seq(
         $.event_prototype_implementation,
         optional($.event_call_supper),
-        token(";"),
+        // token(";"),
         optional($.event_body),
         $.end_of_event,
       ),
 
     //event clicked;call super::clicked;LONG		ll_row, ll_case_id
-    event_call_supper: ($) => seq(token("call super::"), $.event_name),
+    event_call_supper: ($) =>
+      seq(token("call super::"), $.event_name, token(";")),
 
     event_name: ($) => prec(PREC.EVENT_NAME, $._idt),
     event_parameters: ($) => $.function_parameters,
@@ -581,7 +582,7 @@ module.exports = grammar({
             $.array_expression,
             // seq("&", $.newline),
           ),
-          optional($.line_carry),
+          // optional($.line_carry),
         ),
       ),
 
