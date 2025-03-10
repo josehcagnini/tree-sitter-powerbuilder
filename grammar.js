@@ -111,17 +111,18 @@ module.exports = grammar({
       seq(token("type prototypes"), token("end prototypes")),
 
     pb_header_calss_name: ($) =>
-      seq("HA$PBExportHeader$", $.class_name, ".", $.class_type),
-    pb_header_comment: ($) => seq("$PBExportComments$", /[^\n]+/, $.newline),
+      seq(token("HA$PBExportHeader$"), $.class_name, ".", $.class_type),
+    pb_header_comment: ($) =>
+      seq(token("$PBExportComments$"), /[^\n]+/, $.newline),
 
     structur_prototypes: ($) =>
       seq(
-        "type",
+        token("type"),
         $.class_name,
-        "from",
-        "structure",
+        token("from"),
+        token("structure"),
         repeat1($.local_declaration),
-        "end type",
+        token("end type"),
       ),
 
     // optional($.event_prototype_protptypes),
@@ -130,25 +131,31 @@ module.exports = grammar({
     class_type: ($) => $._idt,
     global_class_properties: ($) =>
       seq(
-        field("dummy", "global type"),
+        field("dummy", token("global type")),
         $.class_name,
-        "from",
+        token("from"),
         $.class_name,
         $.newline,
-        optional($.type_variables_list),
-        "end type",
+        optional($.type_variables_and_events_list),
+        token("end type"),
       ),
 
     class_inherit_from: ($) =>
-      seq("global type", $.class_name, "from", $.class_name, "end type"),
+      seq(
+        token("global type"),
+        $.class_name,
+        token("from"),
+        $.class_name,
+        token("end type"),
+      ),
 
     // Forward declarations
     forward_types: ($) =>
       seq(
-        "forward",
+        token("forward"),
         $.class_inherit_from,
         repeat($.forward_type),
-        "end forward",
+        token("end forward"),
       ),
     forward_type: ($) =>
       seq(
@@ -170,15 +177,19 @@ module.exports = grammar({
         "within",
         $.class_name,
         $.newline,
-        optional($.type_variables_list),
+        optional($.type_variables_and_events_list),
         "end type",
       ),
 
     // Variables and properties
     type_variables: ($) =>
-      seq("type variables", optional($.type_variables_list), "end variables"),
+      seq(
+        "type variables",
+        optional($.type_variables_and_events_list),
+        "end variables",
+      ),
 
-    type_variables_list: ($) =>
+    type_variables_and_events_list: ($) =>
       repeat1(
         choice(
           seq($.visibility, ":", $.newline),
@@ -243,8 +254,8 @@ module.exports = grammar({
 
     event_prototype: ($) =>
       seq(
-        "event",
-        optional(seq("type", $.type)),
+        token("event"),
+        optional(seq(token("type"), $.type)),
         $.event_name,
         optional($.event_parameters),
         optional($.event_builtin_type),
@@ -426,6 +437,7 @@ module.exports = grammar({
           $.for_statment,
           $.continue_statemnt,
           $.exit_statemnt,
+          $.update_expression,
         ),
       ),
 
@@ -519,10 +531,24 @@ module.exports = grammar({
     //     alias("until", $.repeat_until),
     //     $._expression,
     //   ),
-
+    update_expression: ($) =>
+      prec.left(
+        50,
+        choice(
+          seq(
+            field("argument", $.local_variable),
+            field("operator", choice(token("++"), token("--"))),
+          ),
+          seq(
+            field("operator", choice(token("++"), token("--"))),
+            field("argument", $.local_variable),
+          ),
+        ),
+      ),
     // Expressions
     expression: ($) =>
       choice(
+        $.update_expression,
         $.unary_expression,
         $.binary_expression,
         $.parenthesized_expression,
