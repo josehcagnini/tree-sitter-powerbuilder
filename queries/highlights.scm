@@ -11,6 +11,8 @@
   "]"
   "("
   ")"
+  "{"
+  "}"
 ] @punctuation.delimiter
 
 
@@ -34,6 +36,10 @@
  "end variables"
  ] @keyword.directive
 
+((for_next) @keyword.return)
+((exit_statemnt) @keyword.return)
+(continue_statemnt) @keyword.return
+(do_until_alias) @keyword.return
 ((event_prototype) @event_prototype)
 
 ((operator_assignment) @operator)
@@ -48,6 +54,7 @@
 ((forward_types) @keyword.directive)
 ((forward_prototypes) @keyword.directive)
 ((dummy_keyword) @keyword.directive)
+((pb_inner_on_event) @keyword.directive)
 
 ; Highlight identifiers in forward prototypes
 ((type) @keyword.type)
@@ -55,7 +62,7 @@
 ((comment) @comment)
 ((string_literal_content) @string)
 ((string_literal_content_single) @string)
-((function_name) @function)
+;; ((function_name) @function)
 ((visibility) @visibility)
 ((return_expression) @keyword.return)
 
@@ -75,10 +82,13 @@
 (object_method_call 
   right: (array_call) @varibale.array_call)
 
+((function_prototype) @function_prototype)
+((event_prototype) @function_prototype)
+((end_of_function) @function_prototype)
+((end_of_event) @function_prototype)
 
-(function_prototype
-  (function_name) @function.declaration)
-  ((event_name) @function.declaration)
+  ((function_name) @function)
+  ((event_name) @function)
 
 
 
@@ -102,6 +112,7 @@
 (else_keyword) @keyword.control.conditional
 (endif_keyword) @keyword.control.conditional
 
+(line_carry) @keyword
 
 (choose_block_start) @keyword
 (choose_case) @keyword

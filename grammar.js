@@ -12,7 +12,7 @@ const PREC = {
   LOCAL_DECLARATION: 0,
   SQL_BLOCK: 20,
   CHOOSE_CASE_ELSE: 20,
-  UNARY: 17,
+  UNARY: 40,
   FUNCTION_NAME: 10,
   EVENT_NAME: 10,
   CODE_BLOCK: 2,
@@ -23,34 +23,73 @@ const PREC = {
   STRING_LITERAL: 1,
   STRING_ESCAPE: 2,
   ASSIGNMENT: 3,
+  BINNARY_ESPRESSION: 3,
 };
 
 module.exports = grammar({
   name: "powerbuilder",
-  extras: ($) => [$.comment, /\s/, "&"],
+  extras: ($) => [$.comment, /\s/],
   // conflicts: ($) => [[$.assignment, $.variable_list]],
   // supertypes: ($) => [$.statement, $.expression, $.declaration, $.variable],
   // supertypes: ($) => [$.return_statement],
   rules: {
     // Top-level structure
     source_file: ($) =>
-      repeat1(
-        seq(
-          $.pb_header_calss_name,
-          optional($.pb_header_comment),
-          $.forward_types,
-          optional(repeat1($.structur_prototypes)),
-          $.global_class_properties,
-          optional($.global_class_dummy),
-          optional($.type_prototypes),
-          $.type_variables,
-          $.forward_prototypes,
-          choice(
-            optional($.event_implementations),
-            optional($.function_implementations),
+      seq(
+        $.pb_header_calss_name,
+        optional($.pb_header_comment),
+        optional($.forward_types),
+        optional(repeat1($.structur_prototypes)),
+        optional($.global_class_properties),
+        optional($.global_class_dummy),
+        optional($.type_prototypes),
+        optional($.type_variables),
+        optional($.forward_prototypes),
+        optional(
+          repeat1(
+            choice(
+              $.event_implementation,
+              $.function_implementation,
+              $.pb_inner_on_event,
+            ),
           ),
         ),
       ),
+
+    line_carry: ($) => seq(token("&"), $.newline),
+
+    unary_expression: ($) =>
+      prec.left(
+        PREC.UNARY,
+        seq(
+          choice(
+            seq(
+              field("operator", prec(100, token(caseInsensitive("NOT")))),
+              field("argument", $.expression),
+            ),
+            seq("-", field("argument", $.expression)),
+          ),
+        ),
+      ),
+
+    pb_inner_on_event_header: ($) =>
+      seq(
+        token(caseInsensitive("on")),
+        $.class_name,
+        ".",
+        alias($._idt, $.pb_inner_event_name),
+        $.newline,
+      ),
+
+    pb_inner_on_event: ($) =>
+      seq(
+        $.pb_inner_on_event_header,
+        optional(repeat1($.statement)),
+        alias(token(caseInsensitive("end on")), $.dummy_keyword),
+      ),
+
+    end_of_function: ($) =>
+      choice(token("end function"), token("end subroutine")),
 
     return_statement: ($) =>
       prec(
@@ -123,7 +162,7 @@ module.exports = grammar({
 
     // Variables and properties
     type_variables: ($) =>
-      seq("type variables", $.type_variables_list, "end variables"),
+      seq("type variables", optional($.type_variables_list), "end variables"),
 
     type_variables_list: ($) =>
       repeat1(
@@ -173,7 +212,7 @@ module.exports = grammar({
       seq(optional("ref"), $.type, $.local_variable, optional(seq("[", "]"))),
 
     // Function implementations
-    function_implementations: ($) => repeat1($.function_implementation),
+    // function_implementations: ($) => repeat1($.function_implementation),
     function_implementation: ($) =>
       seq(
         $.function_prototype,
@@ -183,7 +222,6 @@ module.exports = grammar({
       ),
     function_name: ($) => prec(PREC.FUNCTION_NAME, $._idt),
     function_body: ($) => $.code_block,
-    end_of_function: ($) => choice("end function", "end subroutine"),
 
     // Event handling
     event_prototype_protptypes: ($) => repeat1($.event_prototype_protptype),
@@ -200,7 +238,7 @@ module.exports = grammar({
 
     event_builtin_type: ($) => $._idt,
 
-    event_implementations: ($) => repeat1($.event_implementation),
+    // event_implementations: ($) => repeat1($.event_implementation),
     event_implementation: ($) =>
       seq($.event_prototype, ";", optional($.event_body), $.end_of_event),
 
@@ -311,17 +349,19 @@ module.exports = grammar({
       ),
     end_of_sql: ($) =>
       seq(
-        field("using_keyword", token(/(USING|using|Using)/)),
+        field("using_keyword", token(caseInsensitive("USING"))),
         $.local_variable,
         ";",
       ),
-
-    choose_block_start: ($) => caseInsensitive("choose case"),
-    choose_case: ($) => caseInsensitive("case"),
+    choose_block_start: ($) => token(caseInsensitive("choose case")),
+    choose_case: ($) => token(caseInsensitive("case")),
 
     choose_case_else: ($) =>
-      prec(PREC.CHOOSE_CASE_ELSE, seq(caseInsensitive("case else"), $.newline)),
-    choose_end: ($) => seq(caseInsensitive("end choose"), $.newline),
+      prec(
+        PREC.CHOOSE_CASE_ELSE,
+        seq(token(caseInsensitive("case else")), $.newline),
+      ),
+    choose_end: ($) => seq(token(caseInsensitive("end choose")), $.newline),
 
     choose_block: ($) =>
       seq(
@@ -359,6 +399,47 @@ module.exports = grammar({
           $.choose_block,
           $.goto_def,
           $.goto_use,
+          $.do_untill_loop,
+          $.for_statment,
+          $.continue_statemnt,
+          $.exit_statemnt,
+        ),
+      ),
+
+    continue_statemnt: ($) =>
+      seq(token(caseInsensitive("continue")), $.newline),
+    exit_statemnt: ($) => seq(token(caseInsensitive("exit")), $.newline),
+
+    for_statment: ($) =>
+      seq(
+        alias(token(caseInsensitive("for")), $.for_next),
+        $.expression,
+        token(caseInsensitive("to")),
+        $.expression,
+        $.newline,
+        $.code_block,
+        seq(alias(token(caseInsensitive("next")), $.for_next), $.newline),
+      ),
+
+    do_untill_loop: ($) =>
+      choice(
+        seq(
+          alias(token(caseInsensitive("DO UNTIL")), $.do_until_alias),
+          $.expression,
+          $.newline,
+          $.code_block,
+          alias(
+            seq(token(caseInsensitive("LOOP")), $.newline),
+            $.do_until_alias,
+          ),
+        ),
+        seq(
+          alias(token(caseInsensitive("DO")), $.do_until_alias),
+          $.newline,
+          $.code_block,
+          alias(seq(token(caseInsensitive("LOOP WHILE"))), $.do_until_alias),
+          $.expression,
+          $.newline,
         ),
       ),
 
@@ -387,24 +468,17 @@ module.exports = grammar({
             prec.right(
               repeat1(
                 seq(
-                  $.code_block,
-                  optional(
-                    choice(
-                      seq(
-                        $.elseif_keyword,
-                        $.expression,
-                        $.then_keyword,
-                        optional($.comment),
-                        $.newline,
-                        optional($.code_block),
-                      ),
-                      seq(
-                        seq($.else_keyword, optional($.comment), $.newline),
-                        optional($.code_block),
-                      ),
+                  choice(
+                    $.code_block,
+                    seq(
+                      $.elseif_keyword,
+                      $.expression,
+                      $.then_keyword,
+                      optional($.comment),
+                      $.newline,
                     ),
+                    seq(seq($.else_keyword, optional($.comment), $.newline)),
                   ),
-                  optional($.code_block),
                 ),
               ),
             ),
@@ -426,6 +500,7 @@ module.exports = grammar({
     // Expressions
     expression: ($) =>
       choice(
+        $.unary_expression,
         $.binary_expression,
         $.parenthesized_expression,
         $.value,
@@ -433,24 +508,25 @@ module.exports = grammar({
         $.builtin_const,
         $.function_call,
         $.object_method_call,
-        seq("&", $.newline),
-      ),
-    unary_expression: ($) =>
-      prec.left(
-        PREC.UNARY,
-        seq(
-          field("operator", caseInsensitive("NOT")),
-          field("argument", $.expression),
-        ),
+        $.line_carry,
+        $.array_expression,
+        // seq("&", $.newline),
       ),
 
     binary_expression: ($) =>
-      prec.left(choice(seq($.expression, $.operator_compare, $.expression))),
+      prec.left(
+        PREC.BINNARY_ESPRESSION,
+        choice(seq($.expression, $.operator_compare, $.expression)),
+      ),
     parenthesized_expression: ($) => seq("(", $.expression, ")"),
+    array_expression: ($) => seq("{", repeat(commaSep1($.expression)), "}"),
     assignment: ($) =>
       seq(
         // $.object_method_call,
-        $.local_variable,
+        seq(
+          choice($.local_variable, $.object_method_call),
+          // optional($.array_construction),
+        ),
         $.operator_assignment,
         repeat1($.expression),
         $.newline,
