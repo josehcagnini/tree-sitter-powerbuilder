@@ -522,6 +522,10 @@
           "named": true
         },
         {
+          "type": "update_expression",
+          "named": true
+        },
+        {
           "type": "value",
           "named": true
         }
@@ -628,7 +632,7 @@
           "named": true
         },
         {
-          "type": "type_variables_list",
+          "type": "type_variables_and_events_list",
           "named": true
         }
       ]
@@ -834,7 +838,7 @@
           "named": true
         },
         {
-          "type": "type_variables_list",
+          "type": "type_variables_and_events_list",
           "named": true
         }
       ]
@@ -1348,6 +1352,10 @@
         {
           "type": "sql_block",
           "named": true
+        },
+        {
+          "type": "update_expression",
+          "named": true
         }
       ]
     }
@@ -1437,14 +1445,14 @@
       "required": false,
       "types": [
         {
-          "type": "type_variables_list",
+          "type": "type_variables_and_events_list",
           "named": true
         }
       ]
     }
   },
   {
-    "type": "type_variables_list",
+    "type": "type_variables_and_events_list",
     "named": true,
     "fields": {},
     "children": {
@@ -1481,6 +1489,36 @@
           {
             "type": "expression",
             "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "update_expression",
+    "named": true,
+    "fields": {
+      "argument": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "local_variable",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "++",
+            "named": false
+          },
+          {
+            "type": "--",
+            "named": false
           }
         ]
       }
@@ -1605,6 +1643,10 @@
     "named": false
   },
   {
+    "type": "++",
+    "named": false
+  },
+  {
     "type": "+=",
     "named": false
   },
@@ -1614,6 +1656,10 @@
   },
   {
     "type": "-",
+    "named": false
+  },
+  {
+    "type": "--",
     "named": false
   },
   {

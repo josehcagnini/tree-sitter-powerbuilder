@@ -25,6 +25,7 @@
 ;;  ] @keyword
 
 [
+ "global type"
  "event"
  "end event"
  "function"
@@ -41,6 +42,10 @@
 (continue_statemnt) @keyword.return
 (do_until_alias) @keyword.return
 ((event_prototype) @event_prototype)
+[
+"++"
+"--"
+ ] @operator
 
 ((operator_assignment) @operator)
 ((operator_compare) @operator)
