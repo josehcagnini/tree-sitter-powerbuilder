@@ -37,6 +37,7 @@
  "end variables"
  ] @keyword.directive
 
+
 ((for_next) @keyword.return)
 ((exit_statemnt) @keyword.return)
 (continue_statemnt) @keyword.return
@@ -64,6 +65,9 @@
 ; Highlight identifiers in forward prototypes
 ((type) @keyword.type)
 ((integer) @number)
+((type_integer) @number)
+((type_long) @number)
+((type_string) @string)
 ((comment) @comment)
 ((string_literal_content) @string)
 ((string_literal_content_single) @string)
@@ -118,6 +122,7 @@
 (endif_keyword) @keyword.control.conditional
 
 (line_carry) @keyword
+["ref"] @keyword
 
 (choose_block_start) @keyword
 (choose_case) @keyword
