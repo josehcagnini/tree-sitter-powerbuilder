@@ -38,25 +38,77 @@ module.exports = grammar({
       seq(
         $.pb_header_calss_name,
         optional($.pb_header_comment),
-        optional($.forward_types),
-        optional(repeat1($.structur_prototypes)),
-        optional(repeat1($.shared_variables)),
-        optional($.global_type_block),
-        optional($.global_class_dummy),
-        optional($.type_prototypes),
-        optional($.type_variables),
-        optional($.forward_prototypes),
-        optional(
-          repeat1(
-            choice(
-              $.event_implementation,
-              $.function_implementation,
-              $.pb_inner_on_event,
-              $.forward_type_implemetation,
+        choice(
+          seq(
+            optional($.forward_types),
+            optional(repeat1($.structur_prototypes)),
+            optional(repeat1($.shared_variables)),
+            optional($.global_type_block),
+            optional(repeat1(choice($.forward_type_implemetation))),
+          ),
+          seq(
+            seq(
+              token(caseInsensitive("release")),
+              choice($.decimal, $.integer),
+              ";",
             ),
+            repeat1($.dw_def),
           ),
         ),
       ),
+    dw_def: ($) => seq($.dw_band, $.dw_def_properties),
+    dw_def_properties: ($) =>
+      seq(
+        "(",
+        repeat(choice($.dw_assign_prop, $.dw_sel_rgion, $.dw_sel_argumentes)),
+        ")",
+      ),
+    dw_band: ($) => $._idt,
+
+    dw_value: ($) =>
+      choice(
+        seq(choice($.value, /\w+/), optional(seq("(", $.integer, ")"))),
+        /\w+/,
+      ),
+    dw_identifier: ($) => $._idt,
+    dw_assign_prop: ($) =>
+      choice(
+        seq($.dw_prop, token("="), choice($.dw_value, $.dw_def_properties)),
+      ),
+    dw_sql_arg: ($) => seq(token(":"), $.local_variable),
+    dw_prop: ($) => seq($.dw_identifier, repeat(seq(".", $.dw_identifier))),
+    dw_sql: ($) => repeat1(choice($.dw_sql_arg, /[^":]+/)),
+    dw_any: ($) => /.+/,
+    dw_sel_rgion: ($) =>
+      seq(
+        token(caseInsensitive("retrieve=")),
+        alias(token('"'), $.dw_sql_start),
+        $.dw_sql,
+        alias(token('"'), $.dw_sql_end),
+      ),
+    dw_sel_argumentes: ($) =>
+      seq(
+        token(caseInsensitive("arguments=")),
+        seq(
+          "(",
+          commaSep1(
+            seq(
+              "(",
+              '"',
+              $.sql_argument_name,
+              '"',
+              ",",
+              $.sql_argument_type,
+              ")",
+            ),
+          ),
+          ")",
+        ),
+      ),
+    sql_argument_name: ($) => $._idt,
+    sql_argument_type: ($) => $.type,
+    //------------------------------------------
+
     shared_variables: ($) =>
       seq(
         token("shared variables"),
@@ -114,7 +166,20 @@ module.exports = grammar({
       ),
 
     type_prototypes: ($) =>
-      seq(token("type prototypes"), token("end prototypes")),
+      seq(
+        token("type prototypes"),
+        repeat(
+          seq(
+            $.function_prototype,
+            optional(seq(token(caseInsensitive("LIBRARY")), $.string_literal)),
+            optional(
+              seq(token(caseInsensitive("alias for")), $.string_literal),
+            ),
+            $.newline,
+          ),
+        ),
+        token("end prototypes"),
+      ),
 
     pb_header_calss_name: ($) =>
       seq(token("HA$PBExportHeader$"), $.type_name, ".", $.class_type),
@@ -144,6 +209,19 @@ module.exports = grammar({
         $.newline,
         optional($.type_variables_and_events_list),
         token("end type"),
+        optional($.global_class_dummy),
+        optional($.type_prototypes),
+        optional($.type_variables),
+        optional($.forward_prototypes),
+        optional(
+          repeat1(
+            choice(
+              $.event_implementation,
+              $.function_implementation,
+              $.pb_inner_on_event,
+            ),
+          ),
+        ),
       ),
 
     class_inherit_from: ($) =>
@@ -185,6 +263,7 @@ module.exports = grammar({
         $.newline,
         optional($.type_variables_and_events_list),
         "end type",
+        optional(repeat1($.event_implementation)),
       ),
 
     // Variables and properties
@@ -231,7 +310,13 @@ module.exports = grammar({
     function_prototype: ($) =>
       seq(
         $.visibility,
-        choice(seq(token("function"), $.type), token("subroutine")),
+        choice(
+          seq(
+            alias(token(caseInsensitive("function")), $.function_keyword),
+            $.type,
+          ),
+          token("subroutine"),
+        ),
         $.function_name,
         $.function_parameters,
       ),
@@ -458,8 +543,26 @@ module.exports = grammar({
           $.continue_statemnt,
           $.exit_statemnt,
           $.update_expression,
+          $.call_supper_statement,
+          $.try_catch_statement,
+          $.halt_statement,
         ),
       ),
+    halt_statement: ($) => token("HALT"),
+    try_catch_statement: ($) =>
+      seq(
+        alias(token(caseInsensitive("try")), $.try_keyword),
+        $.code_block,
+        repeat1(
+          seq(
+            alias(token(caseInsensitive("catch")), $.try_keyword),
+            seq("(", $.local_declaration, ")"),
+            $.code_block,
+          ),
+        ),
+        alias(token(caseInsensitive("end try")), $.try_keyword),
+      ),
+    call_supper_statement: ($) => seq(token("call super::"), $.event_name),
 
     continue_statemnt: ($) =>
       seq(token(caseInsensitive("continue")), $.newline),
@@ -494,6 +597,14 @@ module.exports = grammar({
           $.code_block,
           alias(seq(token(caseInsensitive("LOOP WHILE"))), $.do_until_alias),
           $.expression,
+          $.newline,
+        ),
+        seq(
+          alias(token(caseInsensitive("DO WHILE")), $.do_until_alias),
+          $.expression,
+          $.newline,
+          $.code_block,
+          alias(seq(token(caseInsensitive("LOOP"))), $.do_until_alias),
           $.newline,
         ),
       ),
@@ -651,9 +762,9 @@ module.exports = grammar({
     // Common components
     visibility: ($) =>
       choice(
-        caseInsensitive("public"),
-        caseInsensitive("private"),
-        caseInsensitive("protected"),
+        token(caseInsensitive("public")),
+        token(caseInsensitive("private")),
+        token(caseInsensitive("protected")),
       ),
     type: ($) => choice($.builtin_type, $.idt_with_underscore, $._idt),
 

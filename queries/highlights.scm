@@ -28,7 +28,7 @@
  "global type"
  "event"
  "end event"
- "function"
+ ;; "function"
  "end function"
  "type"
  "from"
@@ -36,7 +36,7 @@
  "type variables"
  "end variables"
  ] @keyword.directive
-
+((function_keyword) @keyword.directive)
 
 ((for_next) @keyword.return)
 ((exit_statemnt) @keyword.return)
@@ -114,7 +114,8 @@
 ;; (sql_into (token) @keyword)
 ;; (end_of_sql (token) @keyword)
 
-; Control flow keywords
+;tatemenow keywords
+(try_keyword) @keyword.control.conditional
 (if_keyword) @keyword.control.conditional
 (elseif_keyword) @keyword.control.conditional
 (then_keyword) @keyword.control.conditional
@@ -128,3 +129,9 @@
 (choose_case) @keyword
 (choose_case_else) @keyword
 (choose_end) @keyword
+
+
+; --=[ DW Syntax]=---
+(dw_sql_arg 
+ (local_variable) @sql.parameter)
+
