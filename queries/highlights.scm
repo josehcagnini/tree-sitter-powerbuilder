@@ -64,20 +64,35 @@
 
 ; Highlight identifiers in forward prototypes
 ((type) @keyword.type)
+
 ((integer) @number)
 ((type_integer) @number)
 ((type_long) @number)
 ((type_string) @string)
-((comment) @comment)
+((type_boolean) @string)
 ((string_literal_content) @string)
 ((string_literal_content_single) @string)
+((boolean_literal) @string)
+
+((comment) @comment)
+
 ;; ((function_name) @function)
 ((visibility) @visibility)
-((return_expression) @keyword.return)
+((keyword_return) @keyword.return)
 
 (function_parameters 
           (function_parameter 
             (type) @keyword.type 
+            (local_variable) @variable.local ))
+
+(expression 
+          (create_expression 
+            (keyword) @keyword 
+            (type_name) @keyword.type)) 
+
+(statement 
+          (destry_statement 
+            (keyword) @keyword 
             (local_variable) @variable.local ))
 
 ((local_variable) @variable.local)
@@ -101,11 +116,19 @@
 
 
 
-((sql_keywords) @sql.keyword)
+;; ((sql_keywords) @sql.keyword)
 ((sql_start_keywords) @sql.keyword)
-((end_of_sql) @sql.keyword )
+;; ((end_of_sql) @sql.keyword )
+((using_keyword) @keyword )
+
 (sql_into_params 
  (local_variable) @sql.parameter)
+
+; Injected sql
+;; ((keyword_select) @sql.keyword)
+;; ((keyword_from) @sql.keyword)
+;; ((keyword_where) @sql.keyword)
+;; ((keyword_join) @sql.keyword)
 
 ;; (select_keyword) @keyword
 ;; (update_keyword) @keyword
@@ -123,7 +146,8 @@
 (endif_keyword) @keyword.control.conditional
 
 (line_carry) @keyword
-["ref"] @keyword
+(readonly_keyword) @keyword.directive 
+(ref_keyword) @keyword
 
 (choose_block_start) @keyword
 (choose_case) @keyword

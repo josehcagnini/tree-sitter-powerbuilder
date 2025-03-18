@@ -31,12 +31,11 @@ module.exports = grammar({
   extras: ($) => [$.comment, /\s/, $.line_carry],
   // conflicts: ($) => [[$.assignment, $.variable_list]],
   // supertypes: ($) => [$.statement, $.expression, $.declaration, $.variable],
-  // supertypes: ($) => [$.return_statement],
   rules: {
     // Top-level structure
     source_file: ($) =>
       seq(
-        $.pb_header_calss_name,
+        optional($.pb_header_calss_name),
         optional($.pb_header_comment),
         choice(
           seq(
@@ -81,7 +80,10 @@ module.exports = grammar({
     dw_any: ($) => /.+/,
     dw_sel_rgion: ($) =>
       seq(
-        token(caseInsensitive("retrieve=")),
+        choice(
+          token(caseInsensitive("retrieve=")),
+          token(caseInsensitive("procedure=")),
+        ),
         alias(token('"'), $.dw_sql_start),
         $.dw_sql,
         alias(token('"'), $.dw_sql_end),
@@ -151,16 +153,14 @@ module.exports = grammar({
       choice(token("end function"), token("end subroutine")),
 
     return_statement: ($) =>
-      prec(
-        PREC.RETURN,
-        seq(caseInsensitive("return"), optional($.expression), $.newline),
-      ),
-
-    return_expression: ($) =>
       choice(
         prec.left(
           PREC.RETURN,
-          seq(token(caseInsensitive("return")), $.expression, $.newline),
+          seq(
+            alias(token(caseInsensitive("return")), $.keyword_return),
+            $.expression,
+            $.newline,
+          ),
         ),
         prec(41, seq(token(caseInsensitive("return")), $.newline)),
       ),
@@ -241,28 +241,31 @@ module.exports = grammar({
         repeat($.forward_type),
         token("end forward"),
       ),
+
     forward_type: ($) =>
       seq(
-        "type",
+        token("type"),
         field("InstanceControlName", $.type_name),
-        "from",
+        token("from"),
         $.type_name,
-        "within",
+        token("within"),
         $.type_name,
-        "end type",
+        $.newline,
+        repeat($.local_declaration),
+        token("end type"),
       ),
 
     forward_type_implemetation: ($) =>
       seq(
-        "type",
+        token("type"),
         field("InstanceControlName", $.type_name),
-        "from",
+        token("from"),
         $.type_name,
-        "within",
+        token("within"),
         $.type_name,
         $.newline,
         optional($.type_variables_and_events_list),
-        "end type",
+        token("end type"),
         optional(repeat1($.event_implementation)),
       ),
 
@@ -325,7 +328,14 @@ module.exports = grammar({
       seq("(", repeat(seq($.function_parameter, optional(","))), ")"),
 
     function_parameter: ($) =>
-      seq(optional("ref"), $.type, $.local_variable, optional(seq("[", "]"))),
+      seq(
+        optional(choice($.readonly_keyword, $.ref_keyword)),
+        $.type,
+        $.local_variable,
+        optional(seq("[", "]")),
+      ),
+    readonly_keyword: ($) => token(caseInsensitive("readonly")),
+    ref_keyword: ($) => token(caseInsensitive("ref")),
 
     // Function implementations
     // function_implementations: ($) => repeat1($.function_implementation),
@@ -383,43 +393,53 @@ module.exports = grammar({
     end_of_event: ($) =>
       prec(PREC.END_EVENT, seq(token("end event"), $.newline)),
 
-    sql_block: ($) =>
-      prec(
-        PREC.SQL_BLOCK,
-        seq(
-          choice(
-            $.sql_start_keywords,
-            // $.select_keyword,
-            // $.update_keyword,
-            // $.delete_keyword,
-            // $.insert_keyword,
-          ),
-          optional(
-            repeat1(
-              seq(
-                $.sql_keywords,
-                optional($.sql_into_params),
-                optional($.sql_statments),
-              ),
-            ),
-          ),
+    sql_into_params: ($) => commaSep1(seq(":", $.local_variable)),
 
-          $.end_of_sql,
-        ),
+    sql_block_statement: ($) =>
+      prec(PREC.SQL_BLOCK, seq($.sql_block_content, $.end_of_sql, ";")),
+
+    sql_block_content: ($) =>
+      seq(
+        choice($.sql_start_keywords),
+        // optional(
+        //   repeat1(
+        //     seq(
+        //       $.sql_keywords,
+        //       optional($.sql_into_params),
+        //       optional($.sql_statments),
+        //     ),
+        //   ),
+        // ),
+
+        repeat1(choice($.dw_sql_arg, $.sql_into_block, prec(-1, /[^;:]/))),
+      ),
+
+    sql_into_block: ($) =>
+      seq(alias(token(caseInsensitive("INTO")), $.keyword), $.sql_into_params),
+
+    sql_select_keywords: ($) =>
+      choice(
+        token(caseInsensitive("SELECT")),
+        token(caseInsensitive("SELECTBLOB")),
+      ),
+
+    sql_update_keywords: ($) =>
+      choice(
+        token(caseInsensitive("DECLARE")),
+        token(caseInsensitive("DROP")),
+        token(caseInsensitive("EXECUTE")),
+        token(caseInsensitive("DELETE")),
+        token(caseInsensitive("UPDATE")),
+        token(caseInsensitive("COMMIT")),
+        token(caseInsensitive("ROLLBACK")),
+        token(caseInsensitive("INSERT")),
+        token(caseInsensitive("INSERT INTO")),
       ),
 
     sql_start_keywords: ($) =>
       choice(
-        caseInsensitive("DECLARE"),
-        caseInsensitive("DROP"),
-        caseInsensitive("EXECUTE"),
-        caseInsensitive("SELECT"),
-        caseInsensitive("SELECTBLOB"),
-        caseInsensitive("DELETE"),
-        caseInsensitive("UPDATE"),
-        caseInsensitive("COMMIT"),
-        caseInsensitive("ROLLBACK"),
-        caseInsensitive("INSERT"),
+        $.sql_select_keywords,
+        $.sql_update_keywords,
         // caseInsensitive("FETCH"),
         // caseInsensitive("OPEN"),
         // 	OPEN designatable_cur;
@@ -429,49 +449,45 @@ module.exports = grammar({
 
     sql_keywords: ($) =>
       choice(
-        caseInsensitive("DECLARE"),
-        caseInsensitive("ADD"),
-        caseInsensitive("DROP"),
-        caseInsensitive("GO"),
-        caseInsensitive("EXECUTE"),
-        caseInsensitive("IMMEDIATE"),
-        caseInsensitive("SELECT"),
-        caseInsensitive("SELECTBLOB"),
-        caseInsensitive("INTO"),
-        caseInsensitive("WHERE"),
-        caseInsensitive("GROUP"),
-        caseInsensitive("BY"),
-        caseInsensitive("HAVING"),
-        caseInsensitive("WITH"),
-        caseInsensitive("ORDER"),
-        caseInsensitive("FROM"),
-        caseInsensitive("AS"),
-        caseInsensitive("DELETE"),
-        caseInsensitive("UPDATE"),
-        caseInsensitive("COMMIT"),
-        caseInsensitive("ROLLBACK"),
-        caseInsensitive("INSERT"),
-        caseInsensitive("SET"),
-        caseInsensitive("CREATE"),
-        caseInsensitive("TABLE"),
-        caseInsensitive("INDEX"),
-        caseInsensitive("ALTER"),
-        caseInsensitive("VIEW"),
-        caseInsensitive("FUNCTION"),
-        caseInsensitive("CREATE OR REPLACE"),
-        caseInsensitive("COLUMN"),
-        caseInsensitive("TRIGGER"),
+        token(caseInsensitive("DECLARE")),
+        token(caseInsensitive("ADD")),
+        token(caseInsensitive("DROP")),
+        token(caseInsensitive("GO")),
+        token(caseInsensitive("EXECUTE")),
+        token(caseInsensitive("IMMEDIATE")),
+        token(caseInsensitive("SELECT")),
+        token(caseInsensitive("SELECTBLOB")),
+        token(caseInsensitive("INTO")),
+        token(caseInsensitive("WHERE")),
+        token(caseInsensitive("GROUP")),
+        token(caseInsensitive("BY")),
+        token(caseInsensitive("HAVING")),
+        token(caseInsensitive("WITH")),
+        token(caseInsensitive("ORDER")),
+        token(caseInsensitive("FROM")),
+        token(caseInsensitive("AS")),
+        token(caseInsensitive("DELETE")),
+        token(caseInsensitive("UPDATE")),
+        token(caseInsensitive("COMMIT")),
+        token(caseInsensitive("ROLLBACK")),
+        token(caseInsensitive("INSERT")),
+        token(caseInsensitive("SET")),
+        token(caseInsensitive("CREATE")),
+        token(caseInsensitive("TABLE")),
+        token(caseInsensitive("INDEX")),
+        token(caseInsensitive("ALTER")),
+        token(caseInsensitive("VIEW")),
+        token(caseInsensitive("FUNCTION")),
+        token(caseInsensitive("CREATE OR REPLACE")),
+        token(caseInsensitive("COLUMN")),
+        token(caseInsensitive("TRIGGER")),
       ),
     // Add explicit tokenized SQL keywords
-    select_keyword: ($) => $.sql_keywords,
     // update_keyword: ($) => prec.right($.sql_keywords),
     // delete_keyword: ($) => prec.right($.sql_keywords),
     // insert_keyword: ($) => prec.right($.sql_keywords),
 
     // Keep existing SQL rules but add explicit tokenization
-    sql_into_params: ($) =>
-      // field("into_keyword", token(/(INTO|into|Into)/)),
-      repeat1(seq(":", $.local_variable, optional(","))),
 
     sql_statments: ($) =>
       repeat1(
@@ -488,9 +504,8 @@ module.exports = grammar({
       ),
     end_of_sql: ($) =>
       seq(
-        field("using_keyword", token(caseInsensitive("USING"))),
+        alias(token(caseInsensitive("USING")), $.using_keyword),
         $.local_variable,
-        ";",
       ),
     choose_block_start: ($) => token(caseInsensitive("choose case")),
     choose_case: ($) => token(caseInsensitive("case")),
@@ -527,14 +542,14 @@ module.exports = grammar({
       prec(
         PREC.CODE_BLOCK_CHOICE,
         choice(
-          $.return_expression,
+          $.return_statement,
           $.local_declaration,
           $.comment,
           prec(PREC.ASSIGNMENT, $.assignment),
           $.function_call,
           $.if_statment,
           $.object_method_call,
-          $.sql_block,
+          $.sql_block_statement,
           $.choose_block,
           $.goto_def,
           $.goto_use,
@@ -546,9 +561,24 @@ module.exports = grammar({
           $.call_supper_statement,
           $.try_catch_statement,
           $.halt_statement,
+          $.destry_statement,
         ),
       ),
-    halt_statement: ($) => token("HALT"),
+    destry_statement: ($) =>
+      seq(
+        alias(token(caseInsensitive("Destroy")), $.keyword),
+        optional("("),
+        $.local_variable,
+        optional(")"),
+      ),
+    create_expression: ($) =>
+      seq(alias(token(caseInsensitive("Create")), $.keyword), $.type_name),
+
+    halt_statement: ($) =>
+      choice(
+        token(caseInsensitive("HALT")),
+        token(caseInsensitive("HALT CLOSE")),
+      ),
     try_catch_statement: ($) =>
       seq(
         alias(token(caseInsensitive("try")), $.try_keyword),
@@ -582,7 +612,13 @@ module.exports = grammar({
     do_untill_loop: ($) =>
       choice(
         seq(
-          alias(token(caseInsensitive("DO UNTIL")), $.do_until_alias),
+          alias(
+            choice(
+              token(caseInsensitive("DO UNTIL")),
+              token(caseInsensitive("DO WHILE")),
+            ),
+            $.do_until_alias,
+          ),
           $.expression,
           $.newline,
           $.code_block,
@@ -595,16 +631,14 @@ module.exports = grammar({
           alias(token(caseInsensitive("DO")), $.do_until_alias),
           $.newline,
           $.code_block,
-          alias(seq(token(caseInsensitive("LOOP WHILE"))), $.do_until_alias),
+          alias(
+            choice(
+              token(caseInsensitive("LOOP WHILE")),
+              token(caseInsensitive("LOOP UNTIL")),
+            ),
+            $.do_until_alias,
+          ),
           $.expression,
-          $.newline,
-        ),
-        seq(
-          alias(token(caseInsensitive("DO WHILE")), $.do_until_alias),
-          $.expression,
-          $.newline,
-          $.code_block,
-          alias(seq(token(caseInsensitive("LOOP"))), $.do_until_alias),
           $.newline,
         ),
       ),
@@ -615,11 +649,11 @@ module.exports = grammar({
     goto_def: ($) => seq($._idt, ":"),
     goto_use: ($) => seq(token(caseInsensitive("goto")), $._idt, $.newline),
 
-    if_keyword: ($) => caseInsensitive("IF"),
-    elseif_keyword: ($) => caseInsensitive("ELSEIF"),
-    then_keyword: ($) => caseInsensitive("THEN"),
-    else_keyword: ($) => caseInsensitive("ELSE"),
-    endif_keyword: ($) => caseInsensitive("END IF"),
+    if_keyword: ($) => token(caseInsensitive("IF")),
+    elseif_keyword: ($) => token(caseInsensitive("ELSEIF")),
+    then_keyword: ($) => token(caseInsensitive("THEN")),
+    else_keyword: ($) => token(caseInsensitive("ELSE")),
+    endif_keyword: ($) => token(caseInsensitive("END IF")),
 
     // pb_constructions: ($) => choice($.if_statment),
     if_statment: ($) =>
@@ -691,6 +725,7 @@ module.exports = grammar({
             $.function_call,
             $.object_method_call,
             $.array_expression,
+            $.create_expression,
             // seq("&", $.newline),
           ),
           // optional($.line_carry),
@@ -705,15 +740,17 @@ module.exports = grammar({
     parenthesized_expression: ($) => seq("(", $.expression, ")"),
     array_expression: ($) => seq("{", repeat(commaSep1($.expression)), "}"),
     assignment: ($) =>
-      seq(
-        // $.object_method_call,
+      prec.left(
         seq(
-          choice($.local_variable, $.object_method_call),
-          // optional($.array_construction),
+          // $.object_method_call,
+          seq(
+            choice($.local_variable, $.object_method_call),
+            // optional($.array_construction),
+          ),
+          $.operator_assignment,
+          repeat1($.expression),
+          // $.newline,
         ),
-        $.operator_assignment,
-        repeat1($.expression),
-        $.newline,
       ),
     operator_assignment: ($) => choice("=", "+=", "-="),
 
@@ -742,7 +779,7 @@ module.exports = grammar({
     integer: ($) => /\d+/,
     decimal: ($) => /\d*\.\d+/,
     boolean_literal: ($) =>
-      choice(caseInsensitive("TRUE"), caseInsensitive("FALSE")),
+      choice(token(caseInsensitive("TRUE")), token(caseInsensitive("FALSE"))),
     operator_compare: ($) =>
       choice(
         "+",

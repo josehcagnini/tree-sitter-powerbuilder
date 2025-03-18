@@ -1,43 +1,43 @@
 {
-  "tree-sitter": [
-    {
-      "scope": "source.powerbuilder",
-      "file-types": ["srf", "sru", "srw"],
-      "injection-regex": "HA$PBExportHeader$"
-    }
-  ],
-  "grammars": [
-    {
-      "name": "powerbuilder",
-      "camelcase": "Powerbuilder",
-      "scope": "source.powerbuilder",
-      "file-types": ["srf", "sru", "srw"],
-      "injection-regex": "HA$PBExportHeader$",
-      "path": ".",
-      "highlights": "queries/highlights.scm",
-      "tags": "queries/tags.scm"
-    }
-  ],
-  "metadata": {
-    "version": "0.1.0",
-    "license": "MIT",
-    "description": "a parser for Power Builder script language",
-    "authors": [
-      {
-        "name": "Aliaxander Zhukau",
-        "email": "sashazjukov@gmail.com"
-      }
-    ],
-    "links": {
-      "repository": "https://github.com/tree-sitter/tree-sitter-powerbuilder"
-    }
-  },
-  "bindings": {
-    "c": true,
-    "go": true,
-    "node": true,
-    "python": true,
-    "rust": true,
-    "swift": true
-  }
+	"tree-sitter": [
+		{
+			"scope": "source.powerbuilder",
+			"file-types": ["srf", "sru", "srw", "srf"],
+			"injection-regex": "HA$PBExportHeader$"
+		}
+	],
+	"grammars": [
+		{
+			"name": "powerbuilder",
+			"camelcase": "Powerbuilder",
+			"scope": "source.powerbuilder",
+			"file-types": ["srf", "sru", "srw"],
+			"injection-regex": "HA$PBExportHeader$",
+			"path": ".",
+			"highlights": "queries/highlights.scm",
+			"tags": "queries/tags.scm"
+		}
+	],
+	"metadata": {
+		"version": "0.1.0",
+		"license": "MIT",
+		"description": "a parser for Power Builder script language",
+		"authors": [
+			{
+				"name": "Aliaxander Zhukau",
+				"email": "sashazjukov@gmail.com"
+			}
+		],
+		"links": {
+			"repository": "https://github.com/tree-sitter/tree-sitter-powerbuilder"
+		}
+	},
+	"bindings": {
+		"c": true,
+		"go": true,
+		"node": true,
+		"python": true,
+		"rust": true,
+		"swift": true
+	}
 }

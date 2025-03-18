@@ -1,6 +1,10 @@
 ; https://github.com/stevearc/aerial.nvim/blob/master/queries/php/aerial.scm
 ; (source_file
-  (forward_type_implemetation
+(pb_header_calss_name 
+    (type_name)  @name
+    (#set! "kind" "Class")) @symbol
+
+(forward_type_implemetation
     InstanceControlName: (type_name) @name
     (#set! "kind" "Class")) @symbol
 
