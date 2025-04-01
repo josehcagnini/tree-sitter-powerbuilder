@@ -95,16 +95,19 @@
             (keyword) @keyword 
             (local_variable) @variable.local ))
 
+(keyword) @keyword 
+
 ((local_variable) @variable.local)
 
 ((object_name) @variable.member_left)
 
 (object_method_call 
   left: (object_name)  @variable.member_left
-  right: (object_name) @varibale.member)
+  right: (object_name) @variable)
 
-(object_method_call 
-  right: (array_call) @varibale.array_call)
+; (object_method_call 
+;   right: (array_call) @variable)
+  ; ((array_construction) @variable.array_call)
 
 ((function_prototype) @function_prototype)
 ((event_prototype) @function_prototype)
