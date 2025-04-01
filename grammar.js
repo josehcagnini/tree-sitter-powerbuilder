@@ -430,10 +430,13 @@ module.exports = grammar({
         token(caseInsensitive("EXECUTE")),
         token(caseInsensitive("DELETE")),
         token(caseInsensitive("UPDATE")),
+        token(caseInsensitive("UPDATEBLOB")),
         token(caseInsensitive("COMMIT")),
         token(caseInsensitive("ROLLBACK")),
-        token(caseInsensitive("INSERT")),
-        token(caseInsensitive("INSERT INTO")),
+        seq(
+          token(caseInsensitive("INSERT")),
+          optional(token(caseInsensitive("INTO"))),
+        ),
       ),
 
     sql_start_keywords: ($) =>
@@ -457,7 +460,7 @@ module.exports = grammar({
         token(caseInsensitive("IMMEDIATE")),
         token(caseInsensitive("SELECT")),
         token(caseInsensitive("SELECTBLOB")),
-        token(caseInsensitive("INTO")),
+        // token(caseInsensitive("INTO")),
         token(caseInsensitive("WHERE")),
         token(caseInsensitive("GROUP")),
         token(caseInsensitive("BY")),
@@ -528,7 +531,7 @@ module.exports = grammar({
               seq(
                 $.choose_case,
                 repeat1(seq($.expression, optional(","))),
-                $.newline,
+                // $.newline,
               ),
               $.choose_case_else,
             ),
@@ -544,7 +547,7 @@ module.exports = grammar({
         choice(
           $.return_statement,
           $.local_declaration,
-          $.comment,
+          // $.comment,
           prec(PREC.ASSIGNMENT, $.assignment),
           $.function_call,
           $.if_statment,
@@ -600,13 +603,16 @@ module.exports = grammar({
 
     for_statment: ($) =>
       seq(
-        alias(token(caseInsensitive("for")), $.for_next),
+        alias(token(caseInsensitive("FOR")), $.for_next),
         $.expression,
-        alias(token(caseInsensitive("to")), $.for_next),
+        alias(token(caseInsensitive("TO")), $.keyword),
         $.expression,
+        optional(
+          seq(alias(token(caseInsensitive("STEP")), $.keyword), $.expression),
+        ),
         $.newline,
         $.code_block,
-        seq(alias(token(caseInsensitive("next")), $.for_next), $.newline),
+        seq(alias(token(caseInsensitive("NEXT")), $.for_next), $.newline),
       ),
 
     do_untill_loop: ($) =>
@@ -834,14 +840,20 @@ module.exports = grammar({
       seq(
         field("left", $.object_name),
         ".",
-        optional(caseInsensitive("event")),
+        optional(
+          choice(
+            token(caseInsensitive("event")),
+            token(caseInsensitive("post")),
+            token(caseInsensitive("triggerevent")),
+          ),
+        ),
         field(
           "right",
           choice(
             $.object_name,
             $.object_method_call,
             $.function_call,
-            $.array_call,
+            // $.array_call,
           ),
         ),
       ),
@@ -851,8 +863,8 @@ module.exports = grammar({
 
     // Low-level tokens
     word: ($) => $._idt,
-    _idt: ($) => /[a-zA-Z_][a-zA-Z0-9_]*/,
-    idt_with_underscore: ($) => /[a-zA-Z]+[_]+[a-zA-Z0-9_]*/,
+    _idt: ($) => /[a-zA-Z_][a-zA-Z0-9_\-]*/,
+    idt_with_underscore: ($) => /[a-zA-Z]+[_]+[a-zA-Z0-9_\-]*/,
     newline: ($) => /[\n\r]/,
     comment: (_) =>
       token(
@@ -879,7 +891,8 @@ module.exports = grammar({
     global_class_dummy: ($) => seq($.dummy_keyword, $._idt, $._idt),
     dummy_keyword: ($) => $._idt,
     array_construction: ($) => seq("[", $.expression, "]"),
-    object_name: ($) => $._idt,
+    object_name: ($) => seq($._idt, optional($.array_construction)),
+
     array_call: ($) => seq($._idt, $.array_construction),
 
     local_declaration: ($) =>
