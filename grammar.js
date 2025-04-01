@@ -411,7 +411,7 @@ module.exports = grammar({
         //   ),
         // ),
 
-        repeat1(choice($.dw_sql_arg, $.sql_into_block, prec(-1, /[^;:]/))),
+        // repeat1(choice($.dw_sql_arg, prec(-1, /[^;:]/))),
       ),
 
     sql_into_block: ($) =>
@@ -441,8 +441,15 @@ module.exports = grammar({
 
     sql_start_keywords: ($) =>
       choice(
-        $.sql_select_keywords,
-        $.sql_update_keywords,
+        seq(
+          $.sql_select_keywords,
+          repeat1(choice($.dw_sql_arg, $.sql_into_block, prec(-1, /[^;:]/))),
+        ),
+
+        seq(
+          $.sql_update_keywords,
+          repeat1(choice($.dw_sql_arg, prec(-1, /[^;:]/))),
+        ),
         // caseInsensitive("FETCH"),
         // caseInsensitive("OPEN"),
         // 	OPEN designatable_cur;
