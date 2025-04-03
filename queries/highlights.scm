@@ -9,6 +9,7 @@
   ","
   "["
   "]"
+  "[]"
   "("
   ")"
   "{"
@@ -46,6 +47,7 @@
 [
 "++"
 "--"
+"="
  ] @operator
 
 ((operator_assignment) @operator)
@@ -140,7 +142,7 @@
 ;; (sql_into (token) @keyword)
 ;; (end_of_sql (token) @keyword)
 
-;tatemenow keywords
+;statement keywords
 (try_keyword) @keyword.control.conditional
 (if_keyword) @keyword.control.conditional
 (elseif_keyword) @keyword.control.conditional
@@ -161,4 +163,18 @@
 ; --=[ DW Syntax]=---
 (dw_sql_arg 
  (local_variable) @sql.parameter)
+
+
+((dw_prop) @variable)
+((dw_operator_assignment) @operator)
+
+(dw_assign_prop 
+  (dw_prop_name) @keyword.type
+  (dw_operator_assignment) 
+  (dw_value) @string)
+
+; (dw_assign_prop 
+((dw_prop_db_name) @keyword.type)
+((dw_table_name) @type )
+((dw_table_column_name) @variable.member )
 

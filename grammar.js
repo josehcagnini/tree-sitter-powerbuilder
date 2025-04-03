@@ -69,14 +69,37 @@ module.exports = grammar({
         seq(choice($.value, /\w+/), optional(seq("(", $.integer, ")"))),
         /\w+/,
       ),
+    dw_operator_assignment: ($) => "=",
+
     dw_identifier: ($) => $._idt,
     dw_assign_prop: ($) =>
       choice(
-        seq($.dw_prop, token("="), choice($.dw_value, $.dw_def_properties)),
+        seq($.dw_prop_name, $.dw_operator_assignment, $.dw_value),
+        seq(
+          $.dw_prop_db_name,
+          $.dw_operator_assignment,
+          seq('"', $.dw_pro_db_value, '"'),
+        ),
+        seq(
+          $.dw_prop,
+          $.dw_operator_assignment,
+          choice($.dw_value, $.dw_def_properties),
+        ),
       ),
+    dw_prop_name: ($) => token("name"),
+    dw_prop_db_name: ($) => token("dbname"),
+    dw_pro_db_value: ($) =>
+      choice(
+        seq($.dw_table_column_name),
+        seq($.dw_table_name, ".", $.dw_table_column_name),
+      ),
+
+    dw_table_name: ($) => $.dw_identifier,
+    dw_table_column_name: ($) => $.dw_identifier,
     dw_sql_arg: ($) => seq(token(":"), $.local_variable),
-    dw_prop: ($) => seq($.dw_identifier, repeat(seq(".", $.dw_identifier))),
-    dw_sql: ($) => repeat1(choice($.dw_sql_arg, /[^":]+/)),
+    dw_prop: ($) =>
+      choice(seq($.dw_identifier, repeat(seq(".", $.dw_identifier)))),
+    dw_sql: ($) => repeat1(choice($.dw_sql_arg, /[^"]+/)),
     dw_any: ($) => /.+/,
     dw_sel_rgion: ($) =>
       seq(
@@ -816,7 +839,12 @@ module.exports = grammar({
         token(caseInsensitive("private")),
         token(caseInsensitive("protected")),
       ),
-    type: ($) => choice($.builtin_type, $.idt_with_underscore, $._idt),
+    type: ($) =>
+      choice(
+        seq($.builtin_type, optional($.type_size_precision)),
+        $.idt_with_underscore,
+        $._idt,
+      ),
 
     builtin_type: ($) =>
       choice(
@@ -836,8 +864,11 @@ module.exports = grammar({
         token(caseInsensitive("treeviewitem")),
       ),
 
+    type_size_precision: ($) => seq("{", $.integer, "}"),
+
     local_variable: ($) =>
       prec.left(PREC.LOCAL_VAR, seq($._idt, optional($.array_construction))),
+
     builtin_const: ($) =>
       prec(
         PREC.BUILTIN_CONST,

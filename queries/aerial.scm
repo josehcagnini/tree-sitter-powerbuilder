@@ -19,6 +19,16 @@
     (#set! "kind" "Event")) @symbol
   ; ) @symbol
 
+
+
+(dw_assign_prop 
+  (dw_prop_name) 
+  (dw_operator_assignment) 
+  (dw_value) @name
+    (#set! "kind" "Field")) @symbol
+
+
+
 ; ((event_name) @name 
 ;               (#set! "kind" "Function")) @Symbol
 
