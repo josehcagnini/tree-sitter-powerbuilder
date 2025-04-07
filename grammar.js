@@ -919,16 +919,11 @@ module.exports = grammar({
           choice(
             $.object_name,
             $.object_method_call,
-            // $.dw_object_table_column_call,
             $.function_call,
-
             // $.array_call,
           ),
         ),
       ),
-
-    // dw_object_table_column_call: ($) =>
-    //   seq(token("object"), ".", $.object_name),
 
     function_call: ($) => seq($.function_name, $.function_call_parameters),
     function_call_parameters: ($) =>
