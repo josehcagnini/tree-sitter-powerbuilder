@@ -38,12 +38,14 @@ module.exports = grammar({
         optional($.pb_header_calss_name),
         optional($.pb_header_comment),
         choice(
-          seq(
-            optional($.forward_types),
-            optional(repeat1($.structur_prototypes)),
-            optional(repeat1($.shared_variables)),
-            optional($.global_type_block),
-            optional(repeat1(choice($.forward_type_implemetation))),
+          repeat1(
+            choice(
+              $.forward_types,
+              $.structur_prototypes,
+              $.shared_variables,
+              $.global_type_block,
+              $.forward_type_implemetation,
+            ),
           ),
           seq(
             seq(
@@ -141,6 +143,7 @@ module.exports = grammar({
         token("end variables"),
       ),
     line_carry: ($) => "&",
+    point_comma: ($) => ";",
 
     unary_expression: ($) =>
       prec.left(
@@ -156,6 +159,7 @@ module.exports = grammar({
         ),
       ),
 
+    // on tab_1.create
     pb_inner_on_event_header: ($) =>
       seq(
         token(caseInsensitive("on")),
@@ -289,7 +293,7 @@ module.exports = grammar({
         $.newline,
         optional($.type_variables_and_events_list),
         token("end type"),
-        optional(repeat1($.event_implementation)),
+        optional(repeat1(choice($.event_implementation, $.pb_inner_on_event))),
       ),
 
     // Variables and properties
@@ -401,7 +405,8 @@ module.exports = grammar({
       seq(
         $.event_prototype_implementation,
         optional($.event_call_supper),
-        // token(";"),
+        // optional($.call_supper_statement),
+        // optional(token(";")),
         optional($.event_body),
         $.end_of_event,
       ),
@@ -446,6 +451,12 @@ module.exports = grammar({
         token(caseInsensitive("SELECTBLOB")),
       ),
 
+    sql_commitRollback_keywords: ($) =>
+      choice(
+        token(caseInsensitive("COMMIT")),
+        token(caseInsensitive("ROLLBACK")),
+      ),
+
     sql_update_keywords: ($) =>
       choice(
         token(caseInsensitive("DECLARE")),
@@ -454,8 +465,6 @@ module.exports = grammar({
         token(caseInsensitive("DELETE")),
         token(caseInsensitive("UPDATE")),
         token(caseInsensitive("UPDATEBLOB")),
-        token(caseInsensitive("COMMIT")),
-        token(caseInsensitive("ROLLBACK")),
         seq(
           token(caseInsensitive("INSERT")),
           optional(token(caseInsensitive("INTO"))),
@@ -473,6 +482,8 @@ module.exports = grammar({
           $.sql_update_keywords,
           repeat1(choice($.dw_sql_arg, prec(-1, /[^;:]/))),
         ),
+        seq($.sql_commitRollback_keywords),
+        //
         // caseInsensitive("FETCH"),
         // caseInsensitive("OPEN"),
         // 	OPEN designatable_cur;
@@ -528,7 +539,6 @@ module.exports = grammar({
           $._idt,
           $.operator_compare,
           ".",
-          // $.object_method_call,
           "(",
           ")",
           ",",
@@ -574,34 +584,36 @@ module.exports = grammar({
     statement: ($) =>
       prec(
         PREC.CODE_BLOCK_CHOICE,
-        choice(
-          $.return_statement,
-          $.local_declaration,
-          // $.comment,
-          prec(PREC.ASSIGNMENT, $.assignment),
-          $.function_call,
-          $.if_statment,
-          $.object_method_call,
-          $.sql_block_statement,
-          $.choose_block,
-          $.goto_def,
-          $.goto_use,
-          $.do_untill_loop,
-          $.for_statment,
-          $.continue_statemnt,
-          $.exit_statemnt,
-          $.update_expression,
-          $.call_supper_statement,
-          $.try_catch_statement,
-          $.halt_statement,
-          $.destry_statement,
+        seq(
+          choice(
+            $.return_statement,
+            $.local_declaration,
+            // $.comment,
+            prec(PREC.ASSIGNMENT, $.assignment),
+            $.function_call,
+            $.if_statment,
+            $.object_method_call,
+            $.sql_block_statement,
+            $.choose_block,
+            $.goto_def,
+            $.goto_use,
+            $.do_untill_loop,
+            $.for_statment,
+            $.continue_statemnt,
+            $.exit_statemnt,
+            $.update_expression,
+            $.call_supper_statement,
+            $.try_catch_statement,
+            $.halt_statement,
+            $.destry_statement,
+          ),
         ),
       ),
     destry_statement: ($) =>
       seq(
         alias(token(caseInsensitive("Destroy")), $.keyword),
         optional("("),
-        $.local_variable,
+        choice($.local_variable, $.object_method_call),
         optional(")"),
       ),
     create_expression: ($) =>
@@ -625,7 +637,24 @@ module.exports = grammar({
         ),
         alias(token(caseInsensitive("end try")), $.try_keyword),
       ),
-    call_supper_statement: ($) => seq(token("call super::"), $.event_name),
+
+    // event resize;call super::resize;
+
+    // event constructor;
+    // this.setredraw(FALSE)
+    // super::event constructor()
+
+    // call uo_flexreport_area_ppf::destroy
+    call_supper_statement: ($) =>
+      seq(
+        choice(
+          token(caseInsensitive("super::")),
+          token(caseInsensitive("call super::")),
+        ),
+        optional(token(caseInsensitive("event"))),
+        $.event_name,
+        optional($.function_call_parameters),
+      ),
 
     continue_statemnt: ($) =>
       seq(token(caseInsensitive("continue")), $.newline),
@@ -890,11 +919,17 @@ module.exports = grammar({
           choice(
             $.object_name,
             $.object_method_call,
+            // $.dw_object_table_column_call,
             $.function_call,
+
             // $.array_call,
           ),
         ),
       ),
+
+    // dw_object_table_column_call: ($) =>
+    //   seq(token("object"), ".", $.object_name),
+
     function_call: ($) => seq($.function_name, $.function_call_parameters),
     function_call_parameters: ($) =>
       seq("(", optional(repeat1(seq($.expression, optional(",")))), ")"),
