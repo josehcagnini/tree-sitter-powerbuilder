@@ -2,7 +2,7 @@
 ; (source_file
 (pb_header_calss_name 
     (type_name)  @name
-    (#set! "kind" "Class")) @symbol
+    (#set! "kind" "File")) @symbol
 
 (forward_type_implemetation
     InstanceControlName: (type_name) @name

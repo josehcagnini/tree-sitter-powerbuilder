@@ -3,6 +3,7 @@
 ; Highlight class names
 
 ((ERROR) @ts.error)
+
 [
   ";"
   "."
@@ -15,7 +16,6 @@
   "{"
   "}"
 ] @punctuation.delimiter
-
 
 ;; [
 ;;  "IF"
@@ -37,6 +37,7 @@
  "type variables"
  "end variables"
  ] @keyword.directive
+
 ((function_keyword) @keyword.directive)
 
 ((for_next) @keyword.return)
@@ -83,19 +84,19 @@
 ((keyword_return) @keyword.return)
 
 (function_parameters 
-          (function_parameter 
-            (type) @keyword.type 
-            (local_variable) @variable.local ))
+  (function_parameter 
+    (type) @keyword.type 
+    (local_variable) @variable.local ))
 
 (expression 
-          (create_expression 
-            (keyword) @keyword 
-            (type_name) @keyword.type)) 
+  (create_expression 
+    (keyword) @keyword 
+    (type_name) @keyword.type)) 
 
 (statement 
-          (destry_statement 
-            (keyword) @keyword 
-            (local_variable) @variable.local ))
+  (destry_statement 
+    (keyword) @keyword 
+    (local_variable) @variable.local ))
 
 (keyword) @keyword 
 
@@ -116,9 +117,8 @@
 ((end_of_function) @function_prototype)
 ((end_of_event) @function_prototype)
 
-  ((function_name) @function)
-  ((event_name) @function)
-
+((function_name) @function)
+((event_name) @function)
 
 
 ;; ((sql_keywords) @sql.keyword)
