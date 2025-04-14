@@ -64,7 +64,7 @@ module.exports = grammar({
         repeat(choice($.dw_assign_prop, $.dw_sel_rgion, $.dw_sel_argumentes)),
         ")",
       ),
-    dw_band: ($) => $._idt,
+    dw_band: ($) => $.idt,
 
     dw_value: ($) =>
       choice(
@@ -73,7 +73,7 @@ module.exports = grammar({
       ),
     dw_operator_assignment: ($) => "=",
 
-    dw_identifier: ($) => $._idt,
+    dw_identifier: ($) => $.idt,
     dw_assign_prop: ($) =>
       choice(
         seq($.dw_prop_name, $.dw_operator_assignment, $.dw_value),
@@ -132,7 +132,7 @@ module.exports = grammar({
           ")",
         ),
       ),
-    sql_argument_name: ($) => $._idt,
+    sql_argument_name: ($) => $.idt,
     sql_argument_type: ($) => $.type,
     //------------------------------------------
 
@@ -165,7 +165,7 @@ module.exports = grammar({
         token(caseInsensitive("on")),
         $.type_name,
         ".",
-        alias($._idt, $.pb_inner_event_name),
+        alias($.idt, $.pb_inner_event_name),
         $.newline,
       ),
 
@@ -225,8 +225,8 @@ module.exports = grammar({
 
     // optional($.event_prototype_protptypes),
     // Class structure
-    type_name: ($) => field("classname", $._idt),
-    class_type: ($) => $._idt,
+    type_name: ($) => field("classname", $.idt),
+    class_type: ($) => $.idt,
     global_type_block: ($) =>
       seq(
         field("dummy", token("global type")),
@@ -373,7 +373,7 @@ module.exports = grammar({
         optional($.function_body),
         $.end_of_function,
       ),
-    function_name: ($) => prec(PREC.FUNCTION_NAME, $._idt),
+    function_name: ($) => prec(PREC.FUNCTION_NAME, $.idt),
     function_body: ($) => $.code_block,
 
     // Event handling
@@ -398,7 +398,7 @@ module.exports = grammar({
         optional($.event_builtin_type),
         token(";"),
       ),
-    event_builtin_type: ($) => $._idt,
+    event_builtin_type: ($) => $.idt,
 
     // event_implementations: ($) => repeat1($.event_implementation),
     event_implementation: ($) =>
@@ -415,7 +415,7 @@ module.exports = grammar({
     event_call_supper: ($) =>
       seq(token("call super::"), $.event_name, token(";")),
 
-    event_name: ($) => prec(PREC.EVENT_NAME, $._idt),
+    event_name: ($) => prec(PREC.EVENT_NAME, $.idt),
     event_parameters: ($) => $.function_parameters,
     event_body: ($) => $.code_block,
     end_of_event: ($) =>
@@ -536,7 +536,7 @@ module.exports = grammar({
     sql_statments: ($) =>
       repeat1(
         choice(
-          $._idt,
+          $.idt,
           $.operator_compare,
           ".",
           "(",
@@ -711,8 +711,8 @@ module.exports = grammar({
     // Code blocks and control structures
     code_block: ($) => prec.right(repeat1($.statement)),
 
-    goto_def: ($) => seq($._idt, ":"),
-    goto_use: ($) => seq(token(caseInsensitive("goto")), $._idt, $.newline),
+    goto_def: ($) => seq($.idt, ":"),
+    goto_use: ($) => seq(token(caseInsensitive("goto")), $.idt, $.newline),
 
     if_keyword: ($) => token(caseInsensitive("IF")),
     elseif_keyword: ($) => token(caseInsensitive("ELSEIF")),
@@ -872,7 +872,7 @@ module.exports = grammar({
       choice(
         seq($.builtin_type, optional($.type_size_precision)),
         $.idt_with_underscore,
-        $._idt,
+        $.idt,
       ),
 
     builtin_type: ($) =>
@@ -896,12 +896,12 @@ module.exports = grammar({
     type_size_precision: ($) => seq("{", $.integer, "}"),
 
     local_variable: ($) =>
-      prec.left(PREC.LOCAL_VAR, seq($._idt, optional($.array_construction))),
+      prec.left(PREC.LOCAL_VAR, seq($.idt, optional($.array_construction))),
 
     builtin_const: ($) =>
       prec(
         PREC.BUILTIN_CONST,
-        choice(seq($._idt, "!"), caseInsensitive("null")),
+        choice(seq($.idt, "!"), caseInsensitive("null")),
       ),
     object_method_call: ($) =>
       seq(
@@ -919,8 +919,23 @@ module.exports = grammar({
           choice(
             $.object_name,
             $.object_method_call,
+            $.dw_object_table_column_call,
             $.function_call,
             // $.array_call,
+          ),
+        ),
+      ),
+
+    dw_object_keyword: ($) => token(caseInsensitive("object")),
+    dw_object_table_column_call: ($) =>
+      prec.right(
+        seq(
+          $.dw_object_keyword,
+          ".",
+          choice(
+            $.object_name,
+            seq($.object_name, ".", $.idt),
+            $.function_call,
           ),
         ),
       ),
@@ -930,8 +945,9 @@ module.exports = grammar({
       seq("(", optional(repeat1(seq($.expression, optional(",")))), ")"),
 
     // Low-level tokens
-    word: ($) => $._idt,
-    _idt: ($) => /[a-zA-Z_][a-zA-Z0-9_\-]*/,
+    word: ($) => $.idt,
+    idt: ($) => /[a-zA-Z_][a-zA-Z0-9_\-]*/,
+
     idt_with_underscore: ($) => /[a-zA-Z]+[_]+[a-zA-Z0-9_\-]*/,
     newline: ($) => /[\n\r]/,
     comment: (_) =>
@@ -956,12 +972,10 @@ module.exports = grammar({
       ),
 
     // Helper rules
-    global_class_dummy: ($) => seq($.dummy_keyword, $._idt, $._idt),
-    dummy_keyword: ($) => $._idt,
+    global_class_dummy: ($) => seq($.dummy_keyword, $.idt, $.idt),
+    dummy_keyword: ($) => $.idt,
     array_construction: ($) => seq("[", $.expression, "]"),
-    object_name: ($) => seq($._idt, optional($.array_construction)),
-
-    array_call: ($) => seq($._idt, $.array_construction),
+    object_name: ($) => prec.left(seq($.idt, optional($.array_construction))),
 
     local_declaration: ($) =>
       prec(PREC.LOCAL_DECLARATION, seq($.type, $.variable_list, $.newline)),

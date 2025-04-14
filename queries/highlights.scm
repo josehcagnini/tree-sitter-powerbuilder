@@ -66,7 +66,7 @@
 ((pb_inner_on_event) @keyword.directive)
 
 ; Highlight identifiers in forward prototypes
-((type) @keyword.type)
+((type) @class.name)
 
 ((integer) @number)
 ((type_integer) @number)
@@ -85,13 +85,13 @@
 
 (function_parameters 
   (function_parameter 
-    (type) @keyword.type 
+    (type) @class.name 
     (local_variable) @variable.local ))
 
 (expression 
   (create_expression 
     (keyword) @keyword 
-    (type_name) @keyword.type)) 
+    (type_name) @class.name)) 
 
 (statement 
   (destry_statement 
@@ -178,3 +178,8 @@
 ((dw_table_name) @type )
 ((dw_table_column_name) @variable.member )
 
+
+(dw_object_table_column_call 
+  (dw_object_keyword) @keyword.object
+  (object_name  
+    (idt) @variable.member))
