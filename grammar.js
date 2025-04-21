@@ -919,8 +919,8 @@ module.exports = grammar({
           choice(
             $.object_name,
             $.object_method_call,
-            $.dw_object_table_column_call,
             $.function_call,
+            $.dw_object_table_column_call,
             // $.array_call,
           ),
         ),
@@ -968,13 +968,15 @@ module.exports = grammar({
           /\\u[0-9a-fA-F]{4}/,
           /\\U[0-9a-fA-F]{8}/,
           /\\[abefnrtv'\"\\\?0]/,
+          /\\[abefnrtv'\"\\\?0]/,
+          '~"',
         ),
       ),
 
     // Helper rules
     global_class_dummy: ($) => seq($.dummy_keyword, $.idt, $.idt),
     dummy_keyword: ($) => $.idt,
-    array_construction: ($) => seq("[", $.expression, "]"),
+    array_construction: ($) => seq("[", commaSep1($.expression), "]"),
     object_name: ($) => prec.left(seq($.idt, optional($.array_construction))),
 
     local_declaration: ($) =>
