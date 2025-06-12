@@ -178,7 +178,6 @@
 ((dw_table_name) @type )
 ((dw_table_column_name) @variable.member )
 
-
 (dw_object_table_column_call 
   (dw_object_keyword) @keyword.object
   (object_name  
