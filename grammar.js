@@ -679,8 +679,14 @@ module.exports = grammar({
         seq(
           alias(
             choice(
-              token(caseInsensitive("DO UNTIL")),
-              token(caseInsensitive("DO WHILE")),
+              seq(
+                token(caseInsensitive("DO")),
+                token(caseInsensitive("UNTIL")),
+              ),
+              seq(
+                token(caseInsensitive("DO")),
+                token(caseInsensitive("WHILE")),
+              ),
             ),
             $.do_until_alias,
           ),
@@ -698,8 +704,14 @@ module.exports = grammar({
           $.code_block,
           alias(
             choice(
-              token(caseInsensitive("LOOP WHILE")),
-              token(caseInsensitive("LOOP UNTIL")),
+              seq(
+                token(caseInsensitive("LOOP")),
+                token(caseInsensitive("WHILE")),
+              ),
+              seq(
+                token(caseInsensitive("LOOP")),
+                token(caseInsensitive("UNTIL")),
+              ),
             ),
             $.do_until_alias,
           ),
@@ -718,7 +730,8 @@ module.exports = grammar({
     elseif_keyword: ($) => token(caseInsensitive("ELSEIF")),
     then_keyword: ($) => token(caseInsensitive("THEN")),
     else_keyword: ($) => token(caseInsensitive("ELSE")),
-    endif_keyword: ($) => token(caseInsensitive("END IF")),
+    endif_keyword: ($) =>
+      seq(token(caseInsensitive("END")), token(caseInsensitive("IF"))),
 
     // pb_constructions: ($) => choice($.if_statment),
     if_statment: ($) =>
@@ -830,16 +843,8 @@ module.exports = grammar({
       ),
     string_literal: ($) =>
       choice(
-        seq(
-          "'",
-          repeat(choice($.string_literal_content_single, $.escape_sequence)),
-          "'",
-        ),
-        seq(
-          '"',
-          repeat(choice($.string_literal_content, $.escape_sequence)),
-          '"',
-        ),
+        seq("'", repeat($.string_literal_content_single), "'"),
+        seq('"', repeat($.string_literal_content), '"'),
       ),
     integer: ($) => /\d+/,
     decimal: ($) => /\d*\.\d+/,
@@ -957,21 +962,17 @@ module.exports = grammar({
           seq("/*", /[^*]*\*+([^/*][^*]*\*+)*/, "/"),
         ),
       ),
-    string_literal_content_single: (_) =>
-      choice(token.immediate(prec(PREC.STRING_LITERAL, /[^'\n]+/))),
-    string_literal_content: (_) =>
-      choice(token.immediate(prec(PREC.STRING_LITERAL, /[^"\n]+/))),
-    escape_sequence: (_) =>
-      token(
-        choice(
-          /\\x[0-9a-fA-F]{2,4}/,
-          /\\u[0-9a-fA-F]{4}/,
-          /\\U[0-9a-fA-F]{8}/,
-          /\\[abefnrtv'\"\\\?0]/,
-          /\\[abefnrtv'\"\\\?0]/,
-          '~"',
-        ),
+    string_literal_content_single: ($) =>
+      choice(
+        $.escape_sequence,
+        token.immediate(prec(PREC.STRING_LITERAL, /[^\~'\n]+/)),
       ),
+    string_literal_content: ($) =>
+      choice(
+        $.escape_sequence,
+        token.immediate(prec(PREC.STRING_LITERAL, /[^\~"\n]+/)),
+      ),
+    escape_sequence: ($) => choice(token('~"'), token("~'"), token("~t")),
 
     // Helper rules
     global_class_dummy: ($) => seq($.dummy_keyword, $.idt, $.idt),
