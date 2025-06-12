@@ -2,7 +2,22 @@
   {
     "type": "array_construction",
     "named": true,
-    "fields": {},
+    "fields": {
+      "comma": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "expression",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": false,
       "required": true,
@@ -757,6 +772,16 @@
     }
   },
   {
+    "type": "endif_keyword",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "escape_sequence",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "event_body",
     "named": true,
     "fields": {},
@@ -1427,6 +1452,11 @@
     "fields": {}
   },
   {
+    "type": "if_keyword",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "if_statment",
     "named": true,
     "fields": {},
@@ -2045,10 +2075,6 @@
       "required": false,
       "types": [
         {
-          "type": "escape_sequence",
-          "named": true
-        },
-        {
           "type": "string_literal_content",
           "named": true
         },
@@ -2062,12 +2088,32 @@
   {
     "type": "string_literal_content",
     "named": true,
-    "fields": {}
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "escape_sequence",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "string_literal_content_single",
     "named": true,
-    "fields": {}
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "escape_sequence",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "structur_prototypes",
@@ -2556,14 +2602,6 @@
     "named": false
   },
   {
-    "type": "endif_keyword",
-    "named": true
-  },
-  {
-    "type": "escape_sequence",
-    "named": true
-  },
-  {
     "type": "event",
     "named": false
   },
@@ -2597,10 +2635,6 @@
   },
   {
     "type": "idt_with_underscore",
-    "named": true
-  },
-  {
-    "type": "if_keyword",
     "named": true
   },
   {
@@ -2698,6 +2732,18 @@
   },
   {
     "type": "}",
+    "named": false
+  },
+  {
+    "type": "~\"",
+    "named": false
+  },
+  {
+    "type": "~'",
+    "named": false
+  },
+  {
+    "type": "~t",
     "named": false
   }
 ]
